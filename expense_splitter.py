@@ -200,7 +200,7 @@ if "show_all"    not in st.session_state: st.session_state.show_all    = False
 if "editing_idx" not in st.session_state: st.session_state.editing_idx = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown('<div class="hero"><h1>Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
