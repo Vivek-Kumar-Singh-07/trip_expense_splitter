@@ -14,27 +14,21 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Base app dark background */
-.stApp {
-    background-color: #050e04;
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
+/* Tiger background on html+body — Streamlit does not override these */
+html, body {
+    background-color: #050e04 !important;
+    background-image:
+        linear-gradient(180deg, rgba(2,10,2,0.42) 0%, rgba(3,14,3,0.22) 50%, rgba(2,10,2,0.42) 100%),
+        url("https://images.unsplash.com/photo-1545436578-96740d4d5d34?w=1800&q=90&fit=crop&crop=center") !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
 }
 
-/* Tiger bg div injected via st.markdown */
-#tiger-bg {
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(180deg, rgba(2,10,2,0.45) 0%, rgba(3,14,3,0.25) 50%, rgba(2,10,2,0.45) 100%),
-        url("https://images.unsplash.com/photo-1545436578-96740d4d5d34?w=1800&q=90&fit=crop&crop=center");
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
-    opacity: 0.60;
-    z-index: 0;
-    pointer-events: none;
+/* Make Streamlit wrapper divs transparent so body bg shows through */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    background: transparent !important;
 }
 
 /* All content above bg */
@@ -154,9 +148,6 @@ div[data-testid="column"] button[data-testid*="undo"] {
 }
 </style>
 """, unsafe_allow_html=True)
-
-# Inject tiger background as a fixed div (pseudo-elements don't work reliably in Streamlit)
-st.markdown('<div id="tiger-bg"></div>', unsafe_allow_html=True)
 
 # ─── Config ────────────────────────────────────────────────────────────────────
 FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
@@ -497,27 +488,67 @@ with col_right:
                 pair_key = f"{debtor}|{creditor}"
                 is_pair_settled = pair_key in st.session_state.settled_payments
 
+                # UPI deep-link URLs — amount in paise not needed; apps handle it
+                amt_str = f"{amt:.2f}"
+                upi_note = f"Trip+settlement+{debtor}+to+{creditor}"
+                phonepe_url = f"phonepe://pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note}"
+                gpay_url    = f"tez://upi/pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note}"
+
+                # PhonePe & GPay SVG-style badge icons (inline base64-free, pure CSS/text)
+                upi_icons_html = f"""
+                <div style="display:flex;gap:0.3rem;align-items:center;margin-top:0.3rem;">
+                    <a href="{phonepe_url}" title="Pay via PhonePe"
+                       style="text-decoration:none;display:inline-flex;align-items:center;gap:0.25rem;
+                              background:#5f259f;border-radius:6px;padding:0.18rem 0.45rem;
+                              font-size:0.65rem;font-weight:700;color:#fff;letter-spacing:0.3px;
+                              font-family:'DM Sans',sans-serif;white-space:nowrap;">
+                        <svg width="12" height="12" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="20" cy="20" r="20" fill="#5f259f"/>
+                            <path d="M11 20.5L17.5 14L26 22.5L22 26.5L17.5 22L14.5 25L11 20.5Z" fill="white"/>
+                            <path d="M22 14H29L26 22.5L22 18.5V14Z" fill="#cbaaff"/>
+                        </svg>
+                        PhonePe
+                    </a>
+                    <a href="{gpay_url}" title="Pay via GPay"
+                       style="text-decoration:none;display:inline-flex;align-items:center;gap:0.25rem;
+                              background:#1a73e8;border-radius:6px;padding:0.18rem 0.45rem;
+                              font-size:0.65rem;font-weight:700;color:#fff;letter-spacing:0.3px;
+                              font-family:'DM Sans',sans-serif;white-space:nowrap;">
+                        <svg width="12" height="12" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="20" cy="20" r="20" fill="#fff"/>
+                            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                                  font-size="18" font-weight="800" fill="#1a73e8" font-family="Arial">G</text>
+                        </svg>
+                        GPay
+                    </a>
+                </div>"""
+
                 left_col, btn_col = st.columns([3, 1])
                 with left_col:
                     if is_pair_settled:
                         st.markdown(f"""
-                        <div class="owe-card" style="opacity:0.45;">
-                            <div>
-                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{debtor}</span>
-                                <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
-                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{creditor}</span>
+                        <div class="owe-card" style="opacity:0.45;flex-direction:column;align-items:flex-start;gap:0.2rem;">
+                            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                <div>
+                                    <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{debtor}</span>
+                                    <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
+                                    <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{creditor}</span>
+                                </div>
+                                <div style="color:#7df5b0;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹0.00 ✔</div>
                             </div>
-                            <div style="color:#7df5b0;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹0.00 ✔</div>
                         </div>""", unsafe_allow_html=True)
                     else:
                         st.markdown(f"""
-                        <div class="owe-card">
-                            <div>
-                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
-                                <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
-                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
+                        <div class="owe-card" style="flex-direction:column;align-items:flex-start;gap:0.25rem;">
+                            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                                <div>
+                                    <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
+                                    <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
+                                    <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
+                                </div>
+                                <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹{amt:,.2f}</div>
                             </div>
-                            <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹{amt:,.2f}</div>
+                            {upi_icons_html}
                         </div>""", unsafe_allow_html=True)
                 with btn_col:
                     st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
