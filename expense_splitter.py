@@ -192,7 +192,7 @@ if "expenses" not in st.session_state:
 st.markdown("""
 <div class="hero">
     <h1>✈️ Trip Splitter</h1>
-    <h2>Pench</h2>
+    <h2>🐯🌴 Pench</h2>
 </div>
 """, unsafe_allow_html=True)
 
