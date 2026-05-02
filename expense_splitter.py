@@ -24,6 +24,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
 .total-box { background:rgba(255,210,0,0.07); border:1px solid rgba(255,210,0,0.2); border-radius:12px; padding:1rem 1.3rem; margin-bottom:0.6rem; }
 .fancy-divider { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(255,210,0,0.4),transparent); margin:1.5rem 0; }
 .stButton > button { background:linear-gradient(90deg,#f7971e,#ffd200); color:#1a1a2e; font-family:'Syne',sans-serif; font-weight:700; border:none; border-radius:10px; padding:0.6rem 2rem; font-size:1rem; width:100%; }
+.count-badge { background:rgba(247,151,30,0.2); border:1px solid rgba(247,151,30,0.4); border-radius:50px; padding:0.15rem 0.6rem; font-size:0.75rem; color:#ffd200; font-family:'Syne',sans-serif; font-weight:700; margin-left:0.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -78,6 +79,20 @@ def save_expense(sheet, exp):
         ",".join(exp["split_with"]), ",".join(exp["all_involved"]), exp["per_head"],
     ])
 
+def render_expense_card(exp, idx):
+    st.markdown(f"""
+    <div class="expense-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;">#{idx} {exp['description']}</div>
+                <div style="font-size:0.82rem;color:#a9a9c8;">Paid by <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
+                <div style="font-size:0.82rem;color:#a9a9c8;">Split with: {', '.join(exp['split_with'])}</div>
+                <div style="font-size:0.82rem;color:#a9a9c8;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f} each</b></div>
+            </div>
+            <div style="font-size:1.3rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;">₹{exp['amount']:,.2f}</div>
+        </div>
+    </div>""", unsafe_allow_html=True)
+
 # ─── Connect & Load fresh data every page load ─────────────────────────────────
 try:
     sheet    = get_sheet()
@@ -87,6 +102,10 @@ except Exception as e:
     st.error(f"❌ Google Sheets connection failed: {e}")
     expenses  = []
     connected = False
+
+# ─── Session State for Show All toggle ─────────────────────────────────────────
+if "show_all" not in st.session_state:
+    st.session_state.show_all = False
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>✈️ Trip Splitter</h1><h2>🐯🌴 PENCH</h2></div>', unsafe_allow_html=True)
@@ -139,32 +158,58 @@ with col_left:
                 "per_head":     per_head,
             })
             st.success(f"✅ Saved ₹{amount:,.2f} for '{description.strip()}'")
-            st.rerun()   # rerun fetches fresh data from sheet — no cache to clear
+            st.session_state.show_all = False  # reset to compact view on new entry
+            st.rerun()
 
     st.markdown('<hr class="fancy-divider">', unsafe_allow_html=True)
-    st.markdown('<div class="section-label">🧾 Expense Log</div>', unsafe_allow_html=True)
 
+    # ── Expense Log ────────────────────────────────────────────────────────────
     if not expenses:
+        st.markdown('<div class="section-label">🧾 Expense Log</div>', unsafe_allow_html=True)
         st.markdown('<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.5rem;color:#a9a9c8;text-align:center;">No expenses yet!</div>', unsafe_allow_html=True)
     else:
-        for i, exp in enumerate(reversed(expenses)):
-            idx = len(expenses) - i
-            st.markdown(f"""
-            <div class="expense-card">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;">#{idx} {exp['description']}</div>
-                        <div style="font-size:0.82rem;color:#a9a9c8;">Paid by <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
-                        <div style="font-size:0.82rem;color:#a9a9c8;">Split with: {', '.join(exp['split_with'])}</div>
-                        <div style="font-size:0.82rem;color:#a9a9c8;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f} each</b></div>
-                    </div>
-                    <div style="font-size:1.3rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;">₹{exp['amount']:,.2f}</div>
-                </div>
-            </div>""", unsafe_allow_html=True)
+        # Filter + Show All row
+        filter_col, toggle_col = st.columns([2, 1])
+        with filter_col:
+            filter_person = st.selectbox("🔍 Filter by person", ["All"] + FRIENDS, key="filter_person")
+        with toggle_col:
+            st.markdown("<div style='height:1.8rem'></div>", unsafe_allow_html=True)
+            if st.button("👁 " + ("Show Less" if st.session_state.show_all else "Show All")):
+                st.session_state.show_all = not st.session_state.show_all
+                st.rerun()
 
+        # Apply filter
+        if filter_person == "All":
+            filtered = expenses
+        else:
+            filtered = [e for e in expenses if e["paid_by"] == filter_person or filter_person in e["all_involved"]]
+
+        total_filtered = len(filtered)
+        showing = list(reversed(filtered if st.session_state.show_all else filtered[-5:]))
+
+        # Section label with badge
+        label_suffix = f" · {filter_person}" if filter_person != "All" else ""
+        badge_text   = f"All {total_filtered}" if st.session_state.show_all else f"Last 5 of {total_filtered}"
+        st.markdown(
+            f'<div class="section-label">🧾 Expense Log{label_suffix} <span class="count-badge">{badge_text}</span></div>',
+            unsafe_allow_html=True
+        )
+
+        if not filtered:
+            st.markdown(f'<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:1.2rem;color:#a9a9c8;text-align:center;">No expenses found for {filter_person}.</div>', unsafe_allow_html=True)
+        else:
+            for exp in showing:
+                idx = expenses.index(exp) + 1
+                render_expense_card(exp, idx)
+
+            if not st.session_state.show_all and total_filtered > 5:
+                st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.82rem;margin-bottom:0.5rem;">+ {total_filtered - 5} more hidden · click "Show All" to see</div>', unsafe_allow_html=True)
+
+        st.markdown("<div style='margin-top:0.5rem'></div>", unsafe_allow_html=True)
         if st.button("🗑️ Clear ALL Expenses (cannot undo)"):
             sheet.clear()
             sheet.append_row(HEADERS)
+            st.session_state.show_all = False
             st.rerun()
 
 # ── RIGHT: Balances ────────────────────────────────────────────────────────────
