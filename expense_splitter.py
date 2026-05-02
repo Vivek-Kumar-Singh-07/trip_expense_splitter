@@ -33,7 +33,7 @@ FRIENDS = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 
-# ─── Google Sheets — only cache the CLIENT ─────────────────────────────────────
+# ─── Google Sheets ────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_client():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -76,7 +76,7 @@ def save_expense(sheet, exp):
         ",".join(exp["split_with"]), ",".join(exp["all_involved"]), exp["per_head"],
     ])
 
-# ✅ NEW
+# NEW
 def delete_expense(sheet, index):
     sheet.delete_rows(index + 2)
 
@@ -100,14 +100,12 @@ def render_expense_card(exp, idx):
         </div>
     </div>""", unsafe_allow_html=True)
 
-# ─── Connect & Load ───────────────────────────────────────────────────────────
-sheet    = get_sheet()
+sheet = get_sheet()
 expenses = load_expenses(sheet)
 
 if "show_all" not in st.session_state:
     st.session_state.show_all = False
 
-# ✅ NEW
 if "edit_index" not in st.session_state:
     st.session_state.edit_index = None
 
@@ -120,7 +118,6 @@ col_left, col_right = st.columns([1, 1.1], gap="large")
 with col_left:
     st.markdown('<div class="section-label">💳 Add Expense</div>', unsafe_allow_html=True)
 
-    # ✅ EDIT MODE
     edit_mode = st.session_state.edit_index is not None
     if edit_mode:
         exp = expenses[st.session_state.edit_index]
@@ -128,9 +125,9 @@ with col_left:
     else:
         exp = {"paid_by": FRIENDS[0], "description": "", "amount": 0.0, "split_with": FRIENDS[1:]}
 
-    paid_by     = st.selectbox("Who paid?", FRIENDS, index=FRIENDS.index(exp["paid_by"]))
+    paid_by = st.selectbox("Who paid?", FRIENDS, index=FRIENDS.index(exp["paid_by"]))
     description = st.text_input("What was it for?", value=exp["description"])
-    amount      = st.number_input("Amount (₹)", value=float(exp["amount"]), min_value=0.0)
+    amount = st.number_input("Amount (₹)", value=float(exp["amount"]), min_value=0.0)
 
     split_with = st.multiselect("Split with", [f for f in FRIENDS if f != paid_by],
                                default=[f for f in exp["split_with"] if f != paid_by])
@@ -182,14 +179,36 @@ with col_left:
 with col_right:
     st.markdown('<div class="section-label">📊 Who Owes What</div>', unsafe_allow_html=True)
 
-    balance = defaultdict(float)
-
+    balance, total_paid, total_share = defaultdict(float), defaultdict(float), defaultdict(float)
     for exp in expenses:
+        total_paid[exp["paid_by"]] += exp["amount"]
         for person in exp["all_involved"]:
+            total_share[person] += exp["per_head"]
             if person == exp["paid_by"]:
-                balance[person] += exp["amount"] - exp["per_head"]
+                balance[exp["paid_by"]] += exp["per_head"] * (len(exp["all_involved"]) - 1)
             else:
                 balance[person] -= exp["per_head"]
 
-    for k, v in balance.items():
-        st.markdown(f"<div class='total-box'><b>{k}</b>: ₹{v:.2f}</div>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">🔁 Settlement Plan</div>', unsafe_allow_html=True)
+
+    creditors = sorted([(k, v) for k, v in balance.items() if v > 0.5], key=lambda x: -x[1])
+    debtors   = sorted([(k, -v) for k, v in balance.items() if v < -0.5], key=lambda x: -x[1])
+
+    i, j = 0, 0
+    while i < len(creditors) and j < len(debtors):
+        cname, camount = creditors[i]
+        dname, damount = debtors[j]
+
+        settled = min(camount, damount)
+
+        st.markdown(f"""
+        <div class="owe-card">
+            <div>{dname} → pays → {cname}</div>
+            <div>₹{settled:,.2f}</div>
+        </div>""", unsafe_allow_html=True)
+
+        creditors[i] = (cname, camount - settled)
+        debtors[j]   = (dname, damount - settled)
+
+        if creditors[i][1] < 0.01: i += 1
+        if debtors[j][1]   < 0.01: j += 1
