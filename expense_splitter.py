@@ -121,8 +121,8 @@ header { position:relative; z-index:1; }
 
 /* Hero */
 .hero { text-align:center; padding:1.5rem 1rem 1rem; margin-bottom:1rem; position:relative; z-index:1; }
-.hero h1 { font-size:2.2rem; font-weight:800; background:linear-gradient(90deg,#f7971e,#ffd200,#f7971e); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-1px; margin-bottom:0; }
-.hero h2 { font-size:1.1rem; color:#a9c8a9; font-weight:400; margin-top:0.2rem; }
+.hero h1 { font-size:2.2rem; font-weight:800; background:linear-gradient(90deg,#ffb347,#ffd200,#ff8c00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-1px; margin-bottom:0; white-space:nowrap; }
+.hero h2 { font-size:1.1rem; color:#c8b87a; font-weight:400; margin-top:0.2rem; }
 
 /* Expense cards — compact */
 .expense-card { background:rgba(180,100,10,0.1); border:1px solid rgba(220,150,50,0.25); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
@@ -156,13 +156,35 @@ div[data-testid="column"] .stButton > button {
     min-width: unset;
 }
 
-/* Mobile friendly */
+/* Mobile friendly — tighter spacing */
 @media (max-width: 768px) {
-    .hero h1 { font-size: 1.8rem; }
-    .hero h2 { font-size: 0.95rem; }
-    .expense-card { padding: 0.5rem 0.7rem; }
-    .total-box { padding: 0.5rem 0.7rem; }
-    .owe-card { padding: 0.5rem 0.7rem; }
+    .hero { padding: 0.8rem 0.5rem 0.5rem; margin-bottom: 0.5rem; }
+    .hero h1 { font-size: 1.5rem; }
+    .hero h2 { font-size: 0.85rem; }
+    .expense-card { padding: 0.4rem 0.6rem; margin-bottom: 0.25rem; }
+    .total-box { padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; }
+    .owe-card { padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; }
+    .fancy-divider { margin: 0.5rem 0; }
+    .section-label { margin-bottom: 0.4rem; }
+    .main .block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+}
+
+/* Tighten globally */
+.main .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+div[data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
+
+/* Icon buttons — tiny and inline */
+div[data-testid="column"] .stButton > button {
+    padding: 0.1rem 0.3rem !important;
+    font-size: 0.85rem !important;
+    border-radius: 6px !important;
+    background: rgba(255,255,255,0.07) !important;
+    color: #e8d5a0 !important;
+    border: 1px solid rgba(210,160,60,0.2) !important;
+    width: auto !important;
+    min-width: unset !important;
+    line-height: 1.2 !important;
+    height: auto !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -420,45 +442,39 @@ with col_left:
         )
 
         if not filtered:
-            st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;color:#a9a9c8;text-align:center;font-size:0.9rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
             for orig_idx, exp in showing:
-                # Card display
-                st.markdown(f"""
-                <div class="expense-card">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.9rem;">#{orig_idx+1} {exp['description']}</div>
-                            <div style="font-size:0.75rem;color:#a9a9c8;">Paid by <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
-                            <div style="font-size:0.75rem;color:#a9a9c8;">Split: {', '.join(exp['split_with'])}</div>
-                            <div style="font-size:0.75rem;color:#a9a9c8;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f} each</b></div>
+                # Card + inline edit/delete — all in one row, no extra Streamlit columns
+                card_col, edit_col, del_col = st.columns([10, 1, 1])
+                with card_col:
+                    st.markdown(f"""
+                    <div class="expense-card" style="margin-bottom:0.3rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.2;">#{orig_idx+1} {exp['description']}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">By <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">Split: {', '.join(exp['split_with'])}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f}/head</b></div>
+                            </div>
+                            <div style="font-size:1rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;margin-left:0.4rem;">₹{exp['amount']:,.2f}</div>
                         </div>
-                        <div style="font-size:1.1rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;margin-left:0.5rem;">₹{exp['amount']:,.2f}</div>
-                    </div>
-                </div>""", unsafe_allow_html=True)
-
-                # Edit / Delete inline icon buttons - rendered as HTML links triggering rerun via query params
-                ec1, ec2 = st.columns([6, 1])
-                with ec2:
-                    st.markdown(
-                        f'<div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.2rem;">'
-                        f'</div>',
-                        unsafe_allow_html=True
-                    )
-                btn_row = st.columns([1, 1, 8])
-                with btn_row[0]:
-                    if st.button("✏️", key=f"edit_{orig_idx}", help="Edit this expense"):
+                    </div>""", unsafe_allow_html=True)
+                with edit_col:
+                    st.markdown("<div style='margin-top:0.35rem;'></div>", unsafe_allow_html=True)
+                    if st.button("✏️", key=f"edit_{orig_idx}", help="Edit"):
                         st.session_state.editing_idx = orig_idx
                         st.rerun()
-                with btn_row[1]:
-                    if st.button("🗑", key=f"del_{orig_idx}", help="Delete this expense"):
+                with del_col:
+                    st.markdown("<div style='margin-top:0.35rem;'></div>", unsafe_allow_html=True)
+                    if st.button("🗑", key=f"del_{orig_idx}", help="Delete"):
                         delete_expense_from_sheet(sheet, orig_idx + 2)
                         st.session_state.editing_idx = None
-                        st.success("Expense deleted.")
+                        st.success("Deleted.")
                         st.rerun()
 
             if not st.session_state.show_all and total_filtered > 5:
-                st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.78rem;margin-bottom:0.4rem;">+ {total_filtered - 5} more hidden · click "Show All"</div>', unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.75rem;margin-top:0.2rem;">+ {total_filtered - 5} more · click "Show All"</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════
 # RIGHT — Balances & Settlements
