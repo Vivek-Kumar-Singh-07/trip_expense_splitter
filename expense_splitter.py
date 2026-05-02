@@ -29,7 +29,7 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
 """, unsafe_allow_html=True)
 
 # ─── Config ────────────────────────────────────────────────────────────────────
-FRIENDS = ["Sanjeet", "Kundan", "Naya", "Sanjay", "Govind", "Vivek"]
+FRIENDS = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 
