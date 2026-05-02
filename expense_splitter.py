@@ -238,6 +238,7 @@ if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key 
 if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
 # pair_key currently showing UPI picker
 if "pending_settle"    not in st.session_state: st.session_state.pending_settle    = None
+if "pending_delete"    not in st.session_state: st.session_state.pending_delete    = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
@@ -397,7 +398,7 @@ with col_left:
         if not filtered:
             st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
-            # Handle edit/delete via query params
+            # Handle edit via query params (delete now uses session state confirm)
             qp = st.query_params
             if "edit" in qp:
                 try:
@@ -405,35 +406,58 @@ with col_left:
                 except: pass
                 st.query_params.clear()
                 st.rerun()
-            if "delete" in qp:
-                try:
-                    del_idx = int(qp["delete"])
-                    delete_expense_from_sheet(sheet, del_idx + 2)
-                    st.session_state.editing_idx = None
-                    st.success("Expense deleted.")
-                except: pass
-                st.query_params.clear()
-                st.rerun()
 
             for orig_idx, exp in showing:
-                st.markdown(f"""
-                <div class="expense-card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.3;">#{orig_idx+1} {exp['description']}</div>
-                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">By <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
-                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">Split: {', '.join(exp['split_with'])}</div>
-                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f}/head</b></div>
-                        </div>
-                        <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;flex-shrink:0;">
+                is_confirm_delete = st.session_state.pending_delete == orig_idx
+
+                if is_confirm_delete:
+                    # ── Confirm delete state ───────────────────────────────────
+                    st.markdown(f"""
+                    <div class="expense-card" style="border-color:rgba(255,80,80,0.5);background:rgba(200,40,40,0.12);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.3;">#{orig_idx+1} {exp['description']}</div>
+                                <div style="font-size:0.72rem;color:#ff9a9a;font-family:'Syne',sans-serif;font-weight:600;margin-top:0.2rem;">Delete this expense?</div>
+                            </div>
                             <div style="font-size:0.95rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;">₹{exp['amount']:,.2f}</div>
-                            <div style="display:flex;gap:0.3rem;">
-                                <a href="?edit={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(210,160,60,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Edit">✏️</a>
-                                <a href="?delete={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,60,60,0.1);border:1px solid rgba(255,100,100,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Delete">🗑️</a>
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        if st.button("🗑️ Yes, delete", key=f"confirm_del_{orig_idx}"):
+                            delete_expense_from_sheet(sheet, orig_idx + 2)
+                            st.session_state.pending_delete = None
+                            st.session_state.editing_idx = None
+                            st.rerun()
+                    with c2:
+                        if st.button("✖ Cancel", key=f"cancel_del_{orig_idx}"):
+                            st.session_state.pending_delete = None
+                            st.rerun()
+                else:
+                    # ── Normal expense card ────────────────────────────────────
+                    st.markdown(f"""
+                    <div class="expense-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.3;">#{orig_idx+1} {exp['description']}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">By <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">Split: {', '.join(exp['split_with'])}</div>
+                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f}/head</b></div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;flex-shrink:0;">
+                                <div style="font-size:0.95rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;">₹{exp['amount']:,.2f}</div>
+                                <div style="display:flex;gap:0.3rem;">
+                                    <a href="?edit={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(210,160,60,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Edit">✏️</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>""", unsafe_allow_html=True)
+                    </div>""", unsafe_allow_html=True)
+                    # Delete button rendered below card so Streamlit can handle it
+                    _, del_col = st.columns([5, 1])
+                    with del_col:
+                        if st.button("🗑️", key=f"del_{orig_idx}", help="Delete expense"):
+                            st.session_state.pending_delete = orig_idx
+                            st.rerun()
 
             if not st.session_state.show_all and total_filtered > 5:
                 st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.75rem;margin-top:0.2rem;">+ {total_filtered - 5} more · click "Show All"</div>', unsafe_allow_html=True)
