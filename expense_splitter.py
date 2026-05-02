@@ -27,9 +27,32 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
     overflow-x: hidden;
 }
 
-/* All content above bg */
-.main .block-container { position:relative; z-index:1; }
-header { position:relative; z-index:1; }
+/* Tiger walk animation */
+@keyframes tiger-walk {
+    0%   { left: -120px; transform: scaleX(1); }
+    49%  { left: 110%;   transform: scaleX(1); }
+    50%  { left: 110%;   transform: scaleX(-1); }
+    99%  { left: -120px; transform: scaleX(-1); }
+    100% { left: -120px; transform: scaleX(1); }
+}
+.tiger-strip {
+    position: relative;
+    width: 100%;
+    height: 52px;
+    overflow: hidden;
+    margin-bottom: 0.2rem;
+    z-index: 2;
+}
+.tiger-emoji {
+    position: absolute;
+    top: 4px;
+    font-size: 2.6rem;
+    animation: tiger-walk 9s linear infinite;
+    filter: drop-shadow(0 3px 8px rgba(0,0,0,0.7));
+    line-height: 1;
+    user-select: none;
+}
+
 
 /* Hero */
 .hero {
@@ -200,7 +223,12 @@ if "show_all"    not in st.session_state: st.session_state.show_all    = False
 if "editing_idx" not in st.session_state: st.session_state.editing_idx = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown('<div class="hero"><h1>Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="tiger-strip">
+    <div class="tiger-emoji">🐅</div>
+</div>
+<div class="hero"><h1>Trip Expense Splitter</h1><h2>🌴 PENCH WILDLIFE TRIP</h2></div>
+""", unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
