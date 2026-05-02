@@ -345,34 +345,43 @@ with col_left:
         if not filtered:
             st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
+            # Check query params for edit/delete actions (set by HTML buttons)
+            qp = st.query_params
+            if "edit" in qp:
+                try:
+                    st.session_state.editing_idx = int(qp["edit"])
+                except: pass
+                st.query_params.clear()
+                st.rerun()
+            if "delete" in qp:
+                try:
+                    del_idx = int(qp["delete"])
+                    delete_expense_from_sheet(sheet, del_idx + 2)
+                    st.session_state.editing_idx = None
+                    st.success("Expense deleted.")
+                except: pass
+                st.query_params.clear()
+                st.rerun()
+
             for orig_idx, exp in showing:
-                # Card + inline edit/delete — all in one row, no extra Streamlit columns
-                card_col, edit_col, del_col = st.columns([10, 1, 1])
-                with card_col:
-                    st.markdown(f"""
-                    <div class="expense-card" style="margin-bottom:0.3rem;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.2;">#{orig_idx+1} {exp['description']}</div>
-                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">By <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
-                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">Split: {', '.join(exp['split_with'])}</div>
-                                <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f}/head</b></div>
-                            </div>
-                            <div style="font-size:1rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;margin-left:0.4rem;">₹{exp['amount']:,.2f}</div>
+                st.markdown(f"""
+                <div class="expense-card">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-family:'Syne',sans-serif;font-weight:600;color:#ffd200;font-size:0.82rem;line-height:1.3;">#{orig_idx+1} {exp['description']}</div>
+                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">By <b style="color:#d0d0e8">{exp['paid_by']}</b> · {exp['timestamp']}</div>
+                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">Split: {', '.join(exp['split_with'])}</div>
+                            <div style="font-size:0.7rem;color:#a9a9c8;line-height:1.3;">₹{exp['amount']:,.2f} ÷ {len(exp['all_involved'])} = <b style="color:#d0d0e8">₹{exp['per_head']:,.2f}/head</b></div>
                         </div>
-                    </div>""", unsafe_allow_html=True)
-                with edit_col:
-                    st.markdown("<div style='margin-top:0.35rem;'></div>", unsafe_allow_html=True)
-                    if st.button("✏️", key=f"edit_{orig_idx}", help="Edit"):
-                        st.session_state.editing_idx = orig_idx
-                        st.rerun()
-                with del_col:
-                    st.markdown("<div style='margin-top:0.35rem;'></div>", unsafe_allow_html=True)
-                    if st.button("🗑", key=f"del_{orig_idx}", help="Delete"):
-                        delete_expense_from_sheet(sheet, orig_idx + 2)
-                        st.session_state.editing_idx = None
-                        st.success("Deleted.")
-                        st.rerun()
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;flex-shrink:0;">
+                            <div style="font-size:0.95rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;">₹{exp['amount']:,.2f}</div>
+                            <div style="display:flex;gap:0.3rem;">
+                                <a href="?edit={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(210,160,60,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Edit">✏️</a>
+                                <a href="?delete={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,60,60,0.1);border:1px solid rgba(255,100,100,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Delete">🗑️</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>""", unsafe_allow_html=True)
 
             if not st.session_state.show_all and total_filtered > 5:
                 st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.75rem;margin-top:0.2rem;">+ {total_filtered - 5} more · click "Show All"</div>', unsafe_allow_html=True)
