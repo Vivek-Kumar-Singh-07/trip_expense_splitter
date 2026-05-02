@@ -14,17 +14,35 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Static nature background image — dense jungle canopy */
+/* Background: solid dark jungle base */
 .stApp {
-    background-image:
-        linear-gradient(180deg, rgba(2,12,4,0.78) 0%, rgba(5,20,8,0.62) 40%, rgba(8,18,3,0.72) 100%),
-        url("https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85&fit=crop");
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
+    background-color: #050e04;
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+}
+
+/* Tiger image layer at exactly 50% opacity */
+.stApp::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("https://images.unsplash.com/photo-1545436578-96740d4d5d34?w=1800&q=90&fit=crop&crop=center");
+    background-size: cover;
+    background-position: center center;
+    opacity: 0.50;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Dark green tint overlay on top of tiger image */
+.stApp::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(2,10,2,0.50) 0%, rgba(5,18,5,0.30) 50%, rgba(3,12,3,0.50) 100%);
+    z-index: 0;
+    pointer-events: none;
 }
 
 /* All content above bg */
@@ -197,10 +215,11 @@ except Exception as e:
     connected = False
 
 # ─── Session State ─────────────────────────────────────────────────────────────
-if "show_all"        not in st.session_state: st.session_state.show_all        = False
-if "editing_idx"     not in st.session_state: st.session_state.editing_idx     = None
-# Form reset counter — incrementing it forces Streamlit to reset widget keys
-if "form_reset_key"  not in st.session_state: st.session_state.form_reset_key  = 0
+if "show_all"          not in st.session_state: st.session_state.show_all          = False
+if "editing_idx"       not in st.session_state: st.session_state.editing_idx       = None
+if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key    = 0
+# Set of "debtor|creditor" pairs that have been manually settled
+if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
@@ -454,19 +473,48 @@ with col_right:
             if creditors[i][1] < 0.01: i += 1
             if debtors[j][1]   < 0.01: j += 1
 
-        if not transactions:
+        all_settled = not transactions or all(
+            f"{d}|{c}" in st.session_state.settled_payments for d, c, _ in transactions
+        )
+        if not transactions or all_settled:
             st.markdown('<div class="settled">🎉 Everyone is settled up!</div>', unsafe_allow_html=True)
         else:
             for debtor, creditor, amt in transactions:
-                st.markdown(f"""
-                <div class="owe-card">
-                    <div>
-                        <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
-                        <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
-                        <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
-                    </div>
-                    <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹{amt:,.2f}</div>
-                </div>""", unsafe_allow_html=True)
+                pair_key = f"{debtor}|{creditor}"
+                is_pair_settled = pair_key in st.session_state.settled_payments
+
+                left_col, btn_col = st.columns([3, 1])
+                with left_col:
+                    if is_pair_settled:
+                        st.markdown(f"""
+                        <div class="owe-card" style="opacity:0.45;">
+                            <div>
+                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{debtor}</span>
+                                <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
+                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{creditor}</span>
+                            </div>
+                            <div style="color:#7df5b0;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹0.00 ✔</div>
+                        </div>""", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div class="owe-card">
+                            <div>
+                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
+                                <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
+                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
+                            </div>
+                            <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹{amt:,.2f}</div>
+                        </div>""", unsafe_allow_html=True)
+                with btn_col:
+                    st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
+                    if is_pair_settled:
+                        if st.button("↩ Undo", key=f"undo_{pair_key}"):
+                            st.session_state.settled_payments.discard(pair_key)
+                            st.rerun()
+                    else:
+                        if st.button("✅ Settled", key=f"settle_{pair_key}"):
+                            st.session_state.settled_payments.add(pair_key)
+                            st.rerun()
 
         grand = sum(e["amount"] for e in expenses)
         st.markdown(f'<div style="margin-top:1rem;text-align:right;color:#a9a9c8;font-size:0.82rem;">Total trip spend: <b style="color:#ffd200;font-family:\'Syne\',sans-serif;">₹{grand:,.2f}</b></div>', unsafe_allow_html=True)
