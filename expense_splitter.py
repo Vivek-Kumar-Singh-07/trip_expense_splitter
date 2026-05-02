@@ -27,55 +27,9 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
     overflow-x: hidden;
 }
 
-/* Tiger walk animation — real GIF */
-@keyframes tiger-walk {
-    0%   { left: -160px; }
-    100% { left: 110%;   }
-}
-@keyframes tiger-walk-back {
-    0%   { left: 110%; }
-    100% { left: -160px; }
-}
-
-.tiger-strip {
-    position: relative;
-    width: 100%;
-    height: 90px;
-    overflow: hidden;
-    margin-bottom: 0.1rem;
-    z-index: 2;
-    /* subtle ground line */
-    border-bottom: 1px solid rgba(180,140,60,0.15);
-}
-
-/* Grass/ground under tiger */
-.tiger-ground {
-    position: absolute;
-    bottom: 0; left: 0; width: 100%; height: 18px;
-    background: linear-gradient(180deg, transparent, rgba(20,50,5,0.5));
-}
-
-.tiger-img {
-    position: absolute;
-    bottom: 10px;
-    width: 140px;
-    height: auto;
-    filter: drop-shadow(2px 6px 8px rgba(0,0,0,0.8));
-    animation: tiger-walk 8s linear infinite;
-}
-
-.tiger-img-back {
-    position: absolute;
-    bottom: 10px;
-    width: 140px;
-    height: auto;
-    filter: drop-shadow(2px 6px 8px rgba(0,0,0,0.8)) scaleX(-1);
-    transform: scaleX(-1);
-    animation: tiger-walk-back 8s linear infinite;
-    animation-delay: 8s;
-    left: 110%;
-}
-
+/* All content above bg */
+.main .block-container { position:relative; z-index:1; }
+header { position:relative; z-index:1; }
 
 /* Hero */
 .hero {
@@ -246,20 +200,7 @@ if "show_all"    not in st.session_state: st.session_state.show_all    = False
 if "editing_idx" not in st.session_state: st.session_state.editing_idx = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="tiger-strip">
-    <div class="tiger-ground"></div>
-    <!-- Walking tiger GIF — right direction -->
-    <img class="tiger-img"
-         src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNml3Nmx3eWN0dWI3NHpwcm84NHhydzRuNzlteWNsd3E4ZnZteWp6diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlBO7eyXzSZkJri/giphy.gif"
-         alt="tiger walking"/>
-    <!-- Same tiger mirrored walking back — delayed -->
-    <img class="tiger-img-back"
-         src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNml3Nmx3eWN0dWI3NHpwcm84NHhydzRuNzlteWNsd3E4ZnZteWp6diZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlBO7eyXzSZkJri/giphy.gif"
-         alt="tiger walking back"/>
-</div>
-<div class="hero"><h1>Trip Expense Splitter</h1><h2>🌴 PENCH WILDLIFE TRIP</h2></div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="hero"><h1>Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
