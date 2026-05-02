@@ -33,7 +33,7 @@ FRIENDS = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 
-# ─── Google Sheets ────────────────────────────────────────────────────────────
+# ─── Google Sheets — only cache the CLIENT ─────────────────────────────────────
 @st.cache_resource
 def get_client():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -58,15 +58,15 @@ def load_expenses(sheet):
     for r in sheet.get_all_records():
         try:
             expenses.append({
-                "timestamp": r["timestamp"],
-                "paid_by": r["paid_by"],
+                "timestamp":   r["timestamp"],
+                "paid_by":     r["paid_by"],
                 "description": r["description"],
-                "amount": float(r["amount"]),
-                "split_with": r["split_with"].split(","),
-                "all_involved": r["all_involved"].split(","),
-                "per_head": float(r["per_head"]),
+                "amount":      float(r["amount"]),
+                "split_with":  r["split_with"].split(","),
+                "all_involved":r["all_involved"].split(","),
+                "per_head":    float(r["per_head"]),
             })
-        except:
+        except Exception:
             continue
     return expenses
 
@@ -76,6 +76,7 @@ def save_expense(sheet, exp):
         ",".join(exp["split_with"]), ",".join(exp["all_involved"]), exp["per_head"],
     ])
 
+# ✅ NEW
 def delete_expense(sheet, index):
     sheet.delete_rows(index + 2)
 
@@ -99,17 +100,18 @@ def render_expense_card(exp, idx):
         </div>
     </div>""", unsafe_allow_html=True)
 
-# ─── INIT ─────────────────────────────────────────────────────────────────────
-sheet = get_sheet()
+# ─── Connect & Load ───────────────────────────────────────────────────────────
+sheet    = get_sheet()
 expenses = load_expenses(sheet)
 
 if "show_all" not in st.session_state:
     st.session_state.show_all = False
 
+# ✅ NEW
 if "edit_index" not in st.session_state:
     st.session_state.edit_index = None
 
-# ─── HERO ─────────────────────────────────────────────────────────────────────
+# ─── Hero ─────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>✈️ Trip Expense Splitter</h1><h2>🐯🌴 PENCH</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
@@ -118,17 +120,17 @@ col_left, col_right = st.columns([1, 1.1], gap="large")
 with col_left:
     st.markdown('<div class="section-label">💳 Add Expense</div>', unsafe_allow_html=True)
 
+    # ✅ EDIT MODE
     edit_mode = st.session_state.edit_index is not None
-
     if edit_mode:
         exp = expenses[st.session_state.edit_index]
         st.info("✏️ Editing Expense")
     else:
         exp = {"paid_by": FRIENDS[0], "description": "", "amount": 0.0, "split_with": FRIENDS[1:]}
 
-    paid_by = st.selectbox("Who paid?", FRIENDS, index=FRIENDS.index(exp["paid_by"]))
+    paid_by     = st.selectbox("Who paid?", FRIENDS, index=FRIENDS.index(exp["paid_by"]))
     description = st.text_input("What was it for?", value=exp["description"])
-    amount = st.number_input("Amount (₹)", value=float(exp["amount"]), min_value=0.0)
+    amount      = st.number_input("Amount (₹)", value=float(exp["amount"]), min_value=0.0)
 
     split_with = st.multiselect("Split with", [f for f in FRIENDS if f != paid_by],
                                default=[f for f in exp["split_with"] if f != paid_by])
@@ -150,10 +152,8 @@ with col_left:
         if edit_mode:
             update_expense(sheet, st.session_state.edit_index, new_exp)
             st.session_state.edit_index = None
-            st.success("Updated!")
         else:
             save_expense(sheet, new_exp)
-            st.success("Added!")
 
         st.rerun()
 
@@ -164,10 +164,9 @@ with col_left:
     for exp in expenses:
         idx = expenses.index(exp)
 
-        col1, col2, col3 = st.columns([8, 1, 1])
-
+        col1, col2, col3 = st.columns([8,1,1])
         with col1:
-            render_expense_card(exp, idx + 1)
+            render_expense_card(exp, idx+1)
 
         with col2:
             if st.button("✏️", key=f"edit_{idx}"):
