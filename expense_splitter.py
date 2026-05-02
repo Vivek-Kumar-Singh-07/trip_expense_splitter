@@ -3,6 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from collections import defaultdict
 from datetime import datetime
+import pytz
 
 # ─── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Trip Expense Tracker 🧳", page_icon="🐯", layout="wide")
@@ -14,13 +15,13 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Static nature background image */
+/* Static nature background image — dense jungle canopy */
 .stApp {
     background-image:
-        linear-gradient(180deg, rgba(5,15,5,0.72) 0%, rgba(10,25,10,0.60) 40%, rgba(15,30,5,0.68) 100%),
-        url("https://images.unsplash.com/photo-1504173010664-32509107de5f?w=1600&q=80&fit=crop");
+        linear-gradient(180deg, rgba(2,12,4,0.78) 0%, rgba(5,20,8,0.62) 40%, rgba(8,18,3,0.72) 100%),
+        url("https://images.unsplash.com/photo-1448375240586-882707db888b?w=1800&q=85&fit=crop");
     background-size: cover;
-    background-position: center top;
+    background-position: center center;
     background-attachment: fixed;
     min-height: 100vh;
     position: relative;
@@ -127,9 +128,10 @@ div[data-testid="column"] .stButton > button {
 """, unsafe_allow_html=True)
 
 # ─── Config ────────────────────────────────────────────────────────────────────
-FRIENDS   = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
+FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
+IST        = pytz.timezone("Asia/Kolkata")
 
 # ─── Google Sheets ─────────────────────────────────────────────────────────────
 @st.cache_resource
@@ -196,8 +198,10 @@ except Exception as e:
     connected = False
 
 # ─── Session State ─────────────────────────────────────────────────────────────
-if "show_all"    not in st.session_state: st.session_state.show_all    = False
-if "editing_idx" not in st.session_state: st.session_state.editing_idx = None
+if "show_all"        not in st.session_state: st.session_state.show_all        = False
+if "editing_idx"     not in st.session_state: st.session_state.editing_idx     = None
+# Form reset counter — incrementing it forces Streamlit to reset widget keys
+if "form_reset_key"  not in st.session_state: st.session_state.form_reset_key  = 0
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
@@ -213,6 +217,9 @@ with col_left:
     is_editing = st.session_state.editing_idx is not None
     edit_exp   = expenses[st.session_state.editing_idx] if is_editing else None
 
+    # Unique suffix so widgets fully reset after a successful add
+    fk = st.session_state.form_reset_key
+
     st.markdown(
         f'<div class="section-label">{"✏️ Edit Expense" if is_editing else "💳 Add Expense"}</div>',
         unsafe_allow_html=True
@@ -220,23 +227,27 @@ with col_left:
 
     paid_by = st.selectbox(
         "Who paid?", FRIENDS,
-        index=FRIENDS.index(edit_exp["paid_by"]) if is_editing else 0
+        index=FRIENDS.index(edit_exp["paid_by"]) if is_editing else 0,
+        key=f"paid_by_{fk}"
     )
     description = st.text_input(
         "What was it for?",
         value=edit_exp["description"] if is_editing else "",
-        placeholder="e.g. Dinner, Hotel, Petrol…"
+        placeholder="e.g. Dinner, Hotel, Petrol…",
+        key=f"description_{fk}"
     )
     amount = st.number_input(
         "Amount (₹)",
         min_value=0.0, step=10.0, format="%.2f",
-        value=edit_exp["amount"] if is_editing else 0.0
+        value=edit_exp["amount"] if is_editing else 0.0,
+        key=f"amount_{fk}"
     )
 
     st.markdown("<div style='font-size:0.85rem;font-weight:600;color:#e0e0f0;margin-bottom:0.3rem;'>Split with:</div>", unsafe_allow_html=True)
     select_all = st.checkbox(
-        "Select All Friends", 
-        value=True if not is_editing else set(edit_exp["split_with"]) == set(f for f in FRIENDS if f != edit_exp["paid_by"])
+        "Select All Friends",
+        value=True if not is_editing else set(edit_exp["split_with"]) == set(f for f in FRIENDS if f != edit_exp["paid_by"]),
+        key=f"select_all_{fk}"
     )
     if select_all:
         split_with = [f for f in FRIENDS if f != paid_by]
@@ -249,10 +260,11 @@ with col_left:
         split_with = st.multiselect(
             "Choose friends",
             [f for f in FRIENDS if f != paid_by],
-            default=[f for f in default_split if f != paid_by]
+            default=[f for f in default_split if f != paid_by],
+            key=f"split_with_{fk}"
         )
 
-    # Buttons
+    # ── Buttons ────────────────────────────────────────────────────────────────
     if is_editing:
         b1, b2 = st.columns(2)
         with b1:
@@ -297,8 +309,10 @@ with col_left:
             else:
                 all_involved = list(set([paid_by] + split_with))
                 per_head     = round(amount / len(all_involved), 2)
+                # Use IST for timestamp
+                ist_now      = datetime.now(IST).strftime("%Y-%m-%d %H:%M IST")
                 save_expense(sheet, {
-                    "timestamp":    datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "timestamp":    ist_now,
                     "paid_by":      paid_by,
                     "description":  description.strip(),
                     "amount":       amount,
@@ -307,7 +321,9 @@ with col_left:
                     "per_head":     per_head,
                 })
                 st.success(f"✅ Saved ₹{amount:,.2f} for '{description.strip()}'")
-                st.session_state.show_all = False
+                st.session_state.show_all    = False
+                # ↓ Bump key to reset all form widgets to defaults
+                st.session_state.form_reset_key += 1
                 st.rerun()
 
     st.markdown('<hr class="fancy-divider">', unsafe_allow_html=True)
@@ -327,7 +343,7 @@ with col_left:
                 st.rerun()
 
         if filter_person == "All":
-            filtered = list(enumerate(expenses))  # (original_idx, exp)
+            filtered = list(enumerate(expenses))
         else:
             filtered = [(i, e) for i, e in enumerate(expenses)
                         if e["paid_by"] == filter_person or filter_person in e["all_involved"]]
@@ -345,7 +361,7 @@ with col_left:
         if not filtered:
             st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
-            # Check query params for edit/delete actions (set by HTML buttons)
+            # Handle edit/delete via query params
             qp = st.query_params
             if "edit" in qp:
                 try:
