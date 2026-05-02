@@ -2,8 +2,7 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 from collections import defaultdict
-from datetime import datetime
-import pytz
+from datetime import datetime, timezone, timedelta
 
 # ─── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Trip Expense Tracker 🧳", page_icon="🐯", layout="wide")
@@ -131,7 +130,7 @@ div[data-testid="column"] .stButton > button {
 FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
-IST        = pytz.timezone("Asia/Kolkata")
+IST        = timezone(timedelta(hours=5, minutes=30))
 
 # ─── Google Sheets ─────────────────────────────────────────────────────────────
 @st.cache_resource
