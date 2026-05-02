@@ -14,7 +14,7 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Background: solid dark jungle base */
+/* Base app dark background */
 .stApp {
     background-color: #050e04;
     min-height: 100vh;
@@ -22,25 +22,17 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
     overflow-x: hidden;
 }
 
-/* Tiger image layer at exactly 50% opacity */
-.stApp::before {
-    content: "";
+/* Tiger bg div injected via st.markdown */
+#tiger-bg {
     position: fixed;
     inset: 0;
-    background-image: url("https://images.unsplash.com/photo-1545436578-96740d4d5d34?w=1800&q=90&fit=crop&crop=center");
+    background-image:
+        linear-gradient(180deg, rgba(2,10,2,0.45) 0%, rgba(3,14,3,0.25) 50%, rgba(2,10,2,0.45) 100%),
+        url("https://images.unsplash.com/photo-1545436578-96740d4d5d34?w=1800&q=90&fit=crop&crop=center");
     background-size: cover;
     background-position: center center;
-    opacity: 0.50;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* Dark green tint overlay on top of tiger image */
-.stApp::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(2,10,2,0.50) 0%, rgba(5,18,5,0.30) 50%, rgba(3,12,3,0.50) 100%);
+    background-attachment: fixed;
+    opacity: 0.60;
     z-index: 0;
     pointer-events: none;
 }
@@ -141,8 +133,30 @@ div[data-testid="column"] .stButton > button {
     height: auto !important;
     margin-top: 0.3rem !important;
 }
+/* Settle / Undo buttons — small pill style */
+button[kind="secondary"][data-testid*="settle_"],
+button[kind="secondary"][data-testid*="undo_"],
+div[data-testid="column"] button[data-testid*="settle"],
+div[data-testid="column"] button[data-testid*="undo"] {
+    padding: 0.12rem 0.45rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 50px !important;
+    background: rgba(255,200,50,0.12) !important;
+    color: #ffd97d !important;
+    border: 1px solid rgba(210,160,60,0.35) !important;
+    width: auto !important;
+    min-width: unset !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+    margin-top: 0.55rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 500 !important;
+}
 </style>
 """, unsafe_allow_html=True)
+
+# Inject tiger background as a fixed div (pseudo-elements don't work reliably in Streamlit)
+st.markdown('<div id="tiger-bg"></div>', unsafe_allow_html=True)
 
 # ─── Config ────────────────────────────────────────────────────────────────────
 FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
@@ -508,11 +522,11 @@ with col_right:
                 with btn_col:
                     st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
                     if is_pair_settled:
-                        if st.button("↩ Undo", key=f"undo_{pair_key}"):
+                        if st.button("↩ Undo", key=f"undo_{pair_key}", help="Mark as unsettled"):
                             st.session_state.settled_payments.discard(pair_key)
                             st.rerun()
                     else:
-                        if st.button("✅ Settled", key=f"settle_{pair_key}"):
+                        if st.button("💰 Settle", key=f"settle_{pair_key}", help="Mark as paid"):
                             st.session_state.settled_payments.add(pair_key)
                             st.rerun()
 
