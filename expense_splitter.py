@@ -28,12 +28,10 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
-# ─── Config ────────────────────────────────────────────────────────────────────
 FRIENDS = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 
-# ─── Google Sheets ────────────────────────────────────────────────────────────
 @st.cache_resource
 def get_client():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -109,12 +107,10 @@ if "show_all" not in st.session_state:
 if "edit_index" not in st.session_state:
     st.session_state.edit_index = None
 
-# ─── Hero ─────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>✈️ Trip Expense Splitter</h1><h2>🐯🌴 PENCH</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
-# ── LEFT ──────────────────────────────────────────────────────────────────────
 with col_left:
     st.markdown('<div class="section-label">💳 Add Expense</div>', unsafe_allow_html=True)
 
@@ -160,8 +156,8 @@ with col_left:
 
     for exp in expenses:
         idx = expenses.index(exp)
-
         col1, col2, col3 = st.columns([8,1,1])
+
         with col1:
             render_expense_card(exp, idx+1)
 
@@ -175,7 +171,6 @@ with col_left:
                 delete_expense(sheet, idx)
                 st.rerun()
 
-# ── RIGHT ─────────────────────────────────────────────────────────────────────
 with col_right:
     st.markdown('<div class="section-label">📊 Who Owes What</div>', unsafe_allow_html=True)
 
