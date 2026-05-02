@@ -13,106 +13,18 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
-.stApp { background: linear-gradient(180deg, #0d1b2a 0%, #1a2e1a 35%, #0f2210 65%, #1a1a0a 100%); min-height: 100vh; position:relative; overflow-x:hidden; }
 
-/* Animated forest background */
-.stApp::before {
-    content:'';
-    position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;
-    background:
-        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(34,85,10,0.3) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 35% at 80% 90%, rgba(20,60,5,0.35) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 20% at 50% 100%, rgba(10,40,0,0.5) 0%, transparent 50%),
-        radial-gradient(ellipse 40% 40% at 5% 30%, rgba(180,100,0,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 40% 40% at 95% 20%, rgba(180,100,0,0.07) 0%, transparent 60%);
-}
-
-/* Fireflies */
-@keyframes firefly {
-    0%,100% { opacity:0; transform:translate(0,0) scale(1); }
-    25% { opacity:1; transform:translate(30px,-20px) scale(1.2); }
-    50% { opacity:0.6; transform:translate(-20px,-40px) scale(0.8); }
-    75% { opacity:1; transform:translate(40px,-10px) scale(1.1); }
-}
-@keyframes sway { 0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);} }
-@keyframes float-up { 0%{transform:translateY(0);opacity:1;} 100%{transform:translateY(-60px);opacity:0;} }
-@keyframes tiger-walk {
-    0%{left:-120px;} 100%{left:110%;}
-}
-@keyframes bird-fly {
-    0%{left:110%;top:15%;} 100%{left:-10%;top:8%;}
-}
-@keyframes deer-graze {
-    0%,100%{transform:scaleX(1) translateY(0);} 50%{transform:scaleX(1) translateY(-4px);}
-}
-@keyframes moon-glow {
-    0%,100%{opacity:0.7;box-shadow:0 0 30px 10px rgba(255,230,100,0.15);}
-    50%{opacity:1;box-shadow:0 0 50px 20px rgba(255,230,100,0.25);}
-}
-@keyframes fog {
-    0%{transform:translateX(-100%);}100%{transform:translateX(100%);}
-}
-
-/* Wildlife canvas layer */
-.wildlife-bg {
-    position:fixed; top:0; left:0; width:100%; height:100%;
-    z-index:0; pointer-events:none; overflow:hidden;
-}
-
-/* Moon */
-.moon {
-    position:absolute; top:5%; right:8%;
-    width:60px; height:60px; border-radius:50%;
-    background:radial-gradient(circle at 35% 35%, #fffde7, #ffd54f);
-    animation:moon-glow 4s ease-in-out infinite;
-}
-
-/* Stars */
-.star {
-    position:absolute; border-radius:50%;
-    background:#fff; animation:firefly 3s ease-in-out infinite;
-}
-
-/* Fireflies */
-.firefly {
-    position:absolute; width:4px; height:4px; border-radius:50%;
-    background:#c6ff00; box-shadow:0 0 6px 2px rgba(198,255,0,0.8);
-    animation:firefly 4s ease-in-out infinite;
-}
-
-/* Trees silhouette */
-.tree {
-    position:absolute; bottom:0;
-    border-left: solid transparent; border-right: solid transparent; border-bottom: solid #0a2200;
-}
-
-/* Tiger */
-.tiger {
-    position:absolute; bottom:4%; font-size:2.5rem;
-    animation:tiger-walk 18s linear infinite;
-    filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));
-}
-
-/* Bird */
-.bird {
-    position:absolute; font-size:1.4rem;
-    animation:bird-fly 12s linear infinite;
-    filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-}
-
-/* Deer */
-.deer {
-    position:absolute; bottom:5%; font-size:2rem;
-    animation:deer-graze 2s ease-in-out infinite;
-    filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));
-}
-
-/* Fog layers */
-.fog {
-    position:absolute; height:80px; width:200%;
-    background:linear-gradient(90deg, transparent, rgba(200,230,200,0.04), rgba(200,230,200,0.06), transparent);
-    animation:fog 20s linear infinite;
-    border-radius:50%;
+/* Static nature background image */
+.stApp {
+    background-image:
+        linear-gradient(180deg, rgba(5,15,5,0.72) 0%, rgba(10,25,10,0.60) 40%, rgba(15,30,5,0.68) 100%),
+        url("https://images.unsplash.com/photo-1504173010664-32509107de5f?w=1600&q=80&fit=crop");
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
 }
 
 /* All content above bg */
@@ -120,9 +32,33 @@ h1, h2, h3 { font-family: 'Syne', sans-serif; }
 header { position:relative; z-index:1; }
 
 /* Hero */
-.hero { text-align:center; padding:1.5rem 1rem 1rem; margin-bottom:1rem; position:relative; z-index:1; }
-.hero h1 { font-size:2.2rem; font-weight:800; background:linear-gradient(90deg,#ffb347,#ffd200,#ff8c00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; letter-spacing:-1px; margin-bottom:0; white-space:nowrap; }
-.hero h2 { font-size:1.1rem; color:#c8b87a; font-weight:400; margin-top:0.2rem; }
+.hero {
+    text-align:center;
+    padding:1rem 1rem 0.6rem;
+    margin-bottom:0.6rem;
+    position:relative;
+    z-index:1;
+}
+.hero h1 {
+    font-size:1.9rem;
+    font-weight:800;
+    background:linear-gradient(90deg,#ffb347,#ffd200,#ff8c00);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+    letter-spacing:-0.5px;
+    margin-bottom:0;
+    line-height:1.2;
+    white-space:normal;
+    word-break:keep-all;
+}
+.hero h2 {
+    font-size:0.95rem;
+    color:#d4b87a;
+    font-weight:400;
+    margin-top:0.15rem;
+    letter-spacing:1px;
+}
 
 /* Expense cards — compact */
 .expense-card { background:rgba(180,100,10,0.1); border:1px solid rgba(220,150,50,0.25); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
@@ -158,33 +94,34 @@ div[data-testid="column"] .stButton > button {
 
 /* Mobile friendly — tighter spacing */
 @media (max-width: 768px) {
-    .hero { padding: 0.8rem 0.5rem 0.5rem; margin-bottom: 0.5rem; }
-    .hero h1 { font-size: 1.5rem; }
-    .hero h2 { font-size: 0.85rem; }
-    .expense-card { padding: 0.4rem 0.6rem; margin-bottom: 0.25rem; }
-    .total-box { padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; }
-    .owe-card { padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; }
-    .fancy-divider { margin: 0.5rem 0; }
-    .section-label { margin-bottom: 0.4rem; }
-    .main .block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+    .hero { padding: 0.6rem 0.5rem 0.4rem; margin-bottom: 0.4rem; }
+    .hero h1 { font-size: 1.3rem; }
+    .hero h2 { font-size: 0.78rem; }
+    .expense-card { padding: 0.35rem 0.5rem; margin-bottom: 0.2rem; }
+    .total-box { padding: 0.35rem 0.5rem; margin-bottom: 0.25rem; }
+    .owe-card { padding: 0.35rem 0.5rem; margin-bottom: 0.25rem; }
+    .fancy-divider { margin: 0.4rem 0; }
+    .section-label { margin-bottom: 0.3rem; font-size:0.62rem; }
+    .main .block-container { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
 }
 
 /* Tighten globally */
-.main .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
-div[data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
+.main .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
+div[data-testid="stVerticalBlock"] > div { gap: 0.25rem !important; }
 
-/* Icon buttons — tiny and inline */
+/* Icon buttons — tiny and perfectly inline */
 div[data-testid="column"] .stButton > button {
-    padding: 0.1rem 0.3rem !important;
-    font-size: 0.85rem !important;
+    padding: 0.05rem 0.3rem !important;
+    font-size: 0.8rem !important;
     border-radius: 6px !important;
     background: rgba(255,255,255,0.07) !important;
     color: #e8d5a0 !important;
     border: 1px solid rgba(210,160,60,0.2) !important;
     width: auto !important;
     min-width: unset !important;
-    line-height: 1.2 !important;
+    line-height: 1.4 !important;
     height: auto !important;
+    margin-top: 0.3rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -263,42 +200,6 @@ if "show_all"    not in st.session_state: st.session_state.show_all    = False
 if "editing_idx" not in st.session_state: st.session_state.editing_idx = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown("""
-<div class="wildlife-bg">
-    <!-- Moon -->
-    <div class="moon"></div>
-    <!-- Stars -->
-    <div class="star" style="width:3px;height:3px;top:8%;left:15%;animation-delay:0s;animation-duration:4s;"></div>
-    <div class="star" style="width:2px;height:2px;top:12%;left:30%;animation-delay:1s;animation-duration:5s;"></div>
-    <div class="star" style="width:3px;height:3px;top:6%;left:50%;animation-delay:2s;animation-duration:3.5s;"></div>
-    <div class="star" style="width:2px;height:2px;top:10%;left:70%;animation-delay:0.5s;animation-duration:4.5s;"></div>
-    <div class="star" style="width:3px;height:3px;top:5%;left:85%;animation-delay:1.5s;animation-duration:5s;"></div>
-    <div class="star" style="width:2px;height:2px;top:18%;left:45%;animation-delay:3s;animation-duration:4s;"></div>
-    <div class="star" style="width:2px;height:2px;top:15%;left:60%;animation-delay:2.5s;animation-duration:3s;"></div>
-    <!-- Fireflies -->
-    <div class="firefly" style="top:40%;left:5%;animation-delay:0s;animation-duration:4s;"></div>
-    <div class="firefly" style="top:60%;left:12%;animation-delay:1s;animation-duration:5s;"></div>
-    <div class="firefly" style="top:50%;left:88%;animation-delay:2s;animation-duration:3.5s;"></div>
-    <div class="firefly" style="top:70%;left:80%;animation-delay:0.5s;animation-duration:4.5s;"></div>
-    <div class="firefly" style="top:35%;left:92%;animation-delay:1.5s;animation-duration:5s;"></div>
-    <div class="firefly" style="top:55%;left:75%;animation-delay:3s;animation-duration:4s;"></div>
-    <div class="firefly" style="top:45%;left:20%;animation-delay:2.5s;animation-duration:3s;"></div>
-    <div class="firefly" style="top:65%;left:95%;animation-delay:4s;animation-duration:5s;"></div>
-    <div class="firefly" style="top:30%;left:8%;animation-delay:1.8s;animation-duration:4.2s;"></div>
-    <!-- Tiger walking -->
-    <div class="tiger" style="animation-delay:0s;">🐅</div>
-    <!-- Birds flying -->
-    <div class="bird" style="animation-delay:0s;animation-duration:12s;">🦅</div>
-    <div class="bird" style="animation-delay:4s;animation-duration:15s;top:20%;font-size:1rem;">🦜</div>
-    <div class="bird" style="animation-delay:8s;animation-duration:10s;top:12%;font-size:1.1rem;">🦢</div>
-    <!-- Deer grazing -->
-    <div class="deer" style="right:15%;animation-delay:0s;">🦌</div>
-    <!-- Fog layers -->
-    <div class="fog" style="bottom:8%;animation-duration:25s;animation-delay:0s;"></div>
-    <div class="fog" style="bottom:15%;animation-duration:30s;animation-delay:5s;opacity:0.5;"></div>
-</div>
-""", unsafe_allow_html=True)
-
 st.markdown('<div class="hero"><h1>Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
