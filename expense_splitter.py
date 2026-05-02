@@ -13,18 +13,18 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
-.stApp { background: linear-gradient(180deg, #0a1a0a 0%, #0d2b0d 40%, #1a3a0a 70%, #0f2200 100%); min-height: 100vh; position:relative; overflow-x:hidden; }
+.stApp { background: linear-gradient(180deg, #0d1b2a 0%, #1a2e1a 35%, #0f2210 65%, #1a1a0a 100%); min-height: 100vh; position:relative; overflow-x:hidden; }
 
 /* Animated forest background */
 .stApp::before {
     content:'';
     position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;
     background:
-        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(34,85,10,0.35) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 35% at 80% 90%, rgba(20,60,5,0.4) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 20% at 50% 100%, rgba(10,40,0,0.6) 0%, transparent 50%),
-        radial-gradient(ellipse 30% 50% at 10% 50%, rgba(15,50,5,0.2) 0%, transparent 60%),
-        radial-gradient(ellipse 30% 50% at 90% 40%, rgba(15,50,5,0.2) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(34,85,10,0.3) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 35% at 80% 90%, rgba(20,60,5,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 20% at 50% 100%, rgba(10,40,0,0.5) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 40% at 5% 30%, rgba(180,100,0,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 95% 20%, rgba(180,100,0,0.07) 0%, transparent 60%);
 }
 
 /* Fireflies */
@@ -125,34 +125,35 @@ header { position:relative; z-index:1; }
 .hero h2 { font-size:1.1rem; color:#a9c8a9; font-weight:400; margin-top:0.2rem; }
 
 /* Expense cards — compact */
-.expense-card { background:rgba(20,80,20,0.25); border:1px solid rgba(100,200,100,0.2); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
+.expense-card { background:rgba(180,100,10,0.1); border:1px solid rgba(220,150,50,0.25); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
 
 /* Owe cards — compact */
-.owe-card { background:rgba(255,90,90,0.07); border:1px solid rgba(255,90,90,0.2); border-radius:10px; padding:0.55rem 0.9rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(4px); }
+.owe-card { background:rgba(200,60,60,0.08); border:1px solid rgba(220,100,100,0.22); border-radius:10px; padding:0.55rem 0.9rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(4px); }
 
-.settled { background:rgba(90,255,130,0.08); border:1px solid rgba(90,255,130,0.25); border-radius:10px; padding:0.9rem; text-align:center; color:#90f3a5; font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; }
+.settled { background:rgba(50,180,100,0.1); border:1px solid rgba(80,220,130,0.3); border-radius:10px; padding:0.9rem; text-align:center; color:#7df5b0; font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; }
 
-.section-label { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#90c890; margin-bottom:0.6rem; }
+.section-label { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#d4a84b; margin-bottom:0.6rem; }
 
 /* Total boxes — compact */
-.total-box { background:rgba(20,60,20,0.3); border:1px solid rgba(100,180,100,0.18); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.45rem; backdrop-filter:blur(4px); }
+.total-box { background:rgba(30,50,30,0.35); border:1px solid rgba(180,140,60,0.2); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.45rem; backdrop-filter:blur(4px); }
 
-.fancy-divider { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(100,200,100,0.4),transparent); margin:1rem 0; }
+.fancy-divider { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(210,160,60,0.5),transparent); margin:1rem 0; }
 
-.count-badge { background:rgba(100,200,100,0.2); border:1px solid rgba(100,200,100,0.4); border-radius:50px; padding:0.1rem 0.5rem; font-size:0.7rem; color:#90f390; font-family:'Syne',sans-serif; font-weight:700; margin-left:0.4rem; }
+.count-badge { background:rgba(210,160,60,0.2); border:1px solid rgba(210,160,60,0.4); border-radius:50px; padding:0.1rem 0.5rem; font-size:0.7rem; color:#ffd97d; font-family:'Syne',sans-serif; font-weight:700; margin-left:0.4rem; }
 
 /* Primary button */
-.stButton > button { background:linear-gradient(90deg,#2d6a2d,#4caf50); color:#fff; font-family:'Syne',sans-serif; font-weight:700; border:none; border-radius:10px; padding:0.5rem 1.2rem; font-size:0.95rem; width:100%; }
+.stButton > button { background:linear-gradient(90deg,#b45a00,#e07b00); color:#fff; font-family:'Syne',sans-serif; font-weight:700; border:none; border-radius:10px; padding:0.5rem 1.2rem; font-size:0.95rem; width:100%; }
 
-/* Edit/Delete small buttons */
+/* Edit/Delete small icon buttons */
 div[data-testid="column"] .stButton > button {
-    padding: 0.25rem 0.5rem;
-    font-size:1rem;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.08);
-    color: #e0e0e0;
-    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.2rem 0.55rem;
+    font-size: 1rem;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.07);
+    color: #e8d5a0;
+    border: 1px solid rgba(210,160,60,0.25);
     width: auto;
+    min-width: unset;
 }
 
 /* Mobile friendly */
@@ -276,7 +277,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="hero"><h1>🌿 Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero"><h1>Trip Expense Splitter</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
@@ -436,13 +437,20 @@ with col_left:
                     </div>
                 </div>""", unsafe_allow_html=True)
 
-                # Edit / Delete icon-only buttons per card
-                btn_edit, btn_del, btn_spacer = st.columns([1, 1, 4])
-                with btn_edit:
+                # Edit / Delete inline icon buttons - rendered as HTML links triggering rerun via query params
+                ec1, ec2 = st.columns([6, 1])
+                with ec2:
+                    st.markdown(
+                        f'<div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.2rem;">'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+                btn_row = st.columns([1, 1, 8])
+                with btn_row[0]:
                     if st.button("✏️", key=f"edit_{orig_idx}", help="Edit this expense"):
                         st.session_state.editing_idx = orig_idx
                         st.rerun()
-                with btn_del:
+                with btn_row[1]:
                     if st.button("🗑", key=f"del_{orig_idx}", help="Delete this expense"):
                         delete_expense_from_sheet(sheet, orig_idx + 2)
                         st.session_state.editing_idx = None
