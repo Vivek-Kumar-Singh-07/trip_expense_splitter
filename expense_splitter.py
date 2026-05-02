@@ -108,7 +108,7 @@ if "show_all" not in st.session_state:
     st.session_state.show_all = False
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown('<div class="hero"><h1>✈️ Trip Splitter</h1><h2>🐯🌴 PENCH</h2></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero"><h1>✈️ Trip Expense Splitter</h1><h2>🐯🌴 PENCH</h2></div>', unsafe_allow_html=True)
 if connected:
     st.success("🟢 Connected to Google Sheets — all data is saved permanently!")
 
