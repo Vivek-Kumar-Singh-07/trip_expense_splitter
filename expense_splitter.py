@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 
 # ─── Page Config ───────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Trip Splitter 🧳", page_icon="✈️", layout="wide")
+st.set_page_config(page_title="Trip Expense Splitter 🧳", page_icon="✈️", layout="wide")
 
 # ─── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
