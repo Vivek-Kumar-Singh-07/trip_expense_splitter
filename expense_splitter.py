@@ -538,38 +538,20 @@ with col_right:
                             </div>
                             <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:0.95rem;">₹{amt:,.2f}</div>
                         </div>
-                        <div style="font-size:0.7rem;color:#d4b87a;font-family:'Syne',sans-serif;letter-spacing:1px;text-transform:uppercase;">Pay via:</div>
-                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-                            <button onclick="(function(){{var a=document.createElement('a');a.href='{phonepe_url}';document.body.appendChild(a);a.click();document.body.removeChild(a);}})()"
-                               style="cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;
-                                      background:#5f259f;border:none;border-radius:8px;padding:0.3rem 0.7rem;
-                                      font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.3px;
-                                      font-family:'DM Sans',sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(95,37,159,0.5);">
-                                <svg width="13" height="13" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="20" cy="20" r="20" fill="#7b2fff"/>
-                                    <path d="M11 20.5L17.5 14L26 22.5L22 26.5L17.5 22L14.5 25L11 20.5Z" fill="white"/>
-                                    <path d="M22 14H29L26 22.5L22 18.5V14Z" fill="#cbaaff"/>
-                                </svg>
-                                PhonePe
-                            </button>
-                            <button onclick="(function(){{var a=document.createElement('a');a.href='{gpay_url}';document.body.appendChild(a);a.click();document.body.removeChild(a);}})()"
-                               style="cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;
-                                      background:#fff;border:none;border-radius:8px;padding:0.3rem 0.7rem;
-                                      font-size:0.72rem;font-weight:700;color:#1a73e8;letter-spacing:0.3px;
-                                      font-family:'DM Sans',sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(26,115,232,0.3);">
-                                <svg width="14" height="14" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill="#4285F4" d="M24 9.5c3.1 0 5.8 1.1 8 2.9l6-6C34.3 3.5 29.4 1.5 24 1.5 14.9 1.5 7.2 7 3.7 14.7l7 5.4C12.5 13.8 17.8 9.5 24 9.5z"/>
-                                    <path fill="#34A853" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.4c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4c4.1-3.8 6.5-9.4 6.5-16.2z" opacity=".9"/>
-                                    <path fill="#FBBC05" d="M10.7 28.6c-.5-1.4-.8-2.9-.8-4.6s.3-3.2.8-4.6l-7-5.4C1.9 17 1 20.4 1 24s.9 7 2.7 10l7-5.4z"/>
-                                    <path fill="#EA4335" d="M24 46.5c5.4 0 10-1.8 13.3-4.8l-7-5.4c-1.7 1.2-3.9 1.9-6.3 1.9-6.2 0-11.5-4.2-13.3-9.9l-7 5.4C7.2 41 14.9 46.5 24 46.5z"/>
-                                </svg>
-                                GPay
-                            </button>
-                            <a href="{upi_base}" style="font-size:0.65rem;color:#a9a9c8;text-decoration:underline;font-family:'DM Sans',sans-serif;">other UPI app</a>
-                        </div>
-                        <div style="font-size:0.62rem;color:#7a7a9a;font-family:'DM Sans',sans-serif;margin-top:0.1rem;">
-                            ⚠️ Update UPI IDs in config for deep links to work
-                        </div>
+                        <a href="{upi_base}"
+                           style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;
+                                  background:linear-gradient(90deg,#1a6e3c,#1a9e52);
+                                  border-radius:8px;padding:0.35rem 0.85rem;
+                                  font-size:0.78rem;font-weight:700;color:#fff;
+                                  font-family:'Syne',sans-serif;white-space:nowrap;
+                                  box-shadow:0 2px 10px rgba(26,158,82,0.4);letter-spacing:0.3px;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+                                <path d="M12 7v5l3 3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M8 12h8M14 9l3 3-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Open UPI App
+                        </a>
                     </div>"""
                 else:
                     row_html = f"""
