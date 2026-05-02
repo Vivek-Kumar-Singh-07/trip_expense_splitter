@@ -225,6 +225,8 @@ if "editing_idx"       not in st.session_state: st.session_state.editing_idx    
 if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key    = 0
 # Set of "debtor|creditor" pairs that have been manually settled
 if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
+# pair_key currently showing UPI picker
+if "pending_settle"    not in st.session_state: st.session_state.pending_settle    = None
 
 # ─── Hero ──────────────────────────────────────────────────────────────────────
 st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
@@ -485,80 +487,106 @@ with col_right:
             st.markdown('<div class="settled">🎉 Everyone is settled up!</div>', unsafe_allow_html=True)
         else:
             for debtor, creditor, amt in transactions:
-                pair_key = f"{debtor}|{creditor}"
-                is_pair_settled = pair_key in st.session_state.settled_payments
+                pair_key        = f"{debtor}|{creditor}"
+                is_settled      = pair_key in st.session_state.settled_payments
+                is_picking_upi  = st.session_state.pending_settle == pair_key
 
-                # UPI deep-link URLs — amount in paise not needed; apps handle it
-                amt_str = f"{amt:.2f}"
-                upi_note = f"Trip+settlement+{debtor}+to+{creditor}"
-                phonepe_url = f"phonepe://pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note}"
-                gpay_url    = f"tez://upi/pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note}"
+                amt_str  = f"{amt:.2f}"
+                upi_note = f"Trip settlement {debtor} to {creditor}"
+                phonepe_url = f"phonepe://pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note.replace(' ','+')}"
+                gpay_url    = f"tez://upi/pay?pa=&pn={creditor}&am={amt_str}&cu=INR&tn={upi_note.replace(' ','+')}"
 
-                # PhonePe & GPay SVG-style badge icons (inline base64-free, pure CSS/text)
-                upi_icons_html = f"""
-                <div style="display:flex;gap:0.3rem;align-items:center;margin-top:0.3rem;">
-                    <a href="{phonepe_url}" title="Pay via PhonePe"
-                       style="text-decoration:none;display:inline-flex;align-items:center;gap:0.25rem;
-                              background:#5f259f;border-radius:6px;padding:0.18rem 0.45rem;
-                              font-size:0.65rem;font-weight:700;color:#fff;letter-spacing:0.3px;
-                              font-family:'DM Sans',sans-serif;white-space:nowrap;">
-                        <svg width="12" height="12" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="20" cy="20" r="20" fill="#5f259f"/>
-                            <path d="M11 20.5L17.5 14L26 22.5L22 26.5L17.5 22L14.5 25L11 20.5Z" fill="white"/>
-                            <path d="M22 14H29L26 22.5L22 18.5V14Z" fill="#cbaaff"/>
-                        </svg>
-                        PhonePe
-                    </a>
-                    <a href="{gpay_url}" title="Pay via GPay"
-                       style="text-decoration:none;display:inline-flex;align-items:center;gap:0.25rem;
-                              background:#1a73e8;border-radius:6px;padding:0.18rem 0.45rem;
-                              font-size:0.65rem;font-weight:700;color:#fff;letter-spacing:0.3px;
-                              font-family:'DM Sans',sans-serif;white-space:nowrap;">
-                        <svg width="12" height="12" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="20" cy="20" r="20" fill="#fff"/>
-                            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-                                  font-size="18" font-weight="800" fill="#1a73e8" font-family="Arial">G</text>
-                        </svg>
-                        GPay
-                    </a>
-                </div>"""
+                # ── Row HTML ──────────────────────────────────────────────────
+                if is_settled:
+                    row_html = f"""
+                    <div class="owe-card" style="opacity:0.4;flex-direction:column;align-items:flex-start;gap:0.15rem;">
+                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                            <div>
+                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{debtor}</span>
+                                <span style="color:#a9a9c8;margin:0 0.35rem;font-size:0.78rem;">→ pays →</span>
+                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{creditor}</span>
+                            </div>
+                            <div style="color:#7df5b0;font-weight:700;font-family:'Syne',sans-serif;font-size:0.95rem;">₹0.00 ✔</div>
+                        </div>
+                    </div>"""
+                elif is_picking_upi:
+                    row_html = f"""
+                    <div class="owe-card" style="flex-direction:column;align-items:flex-start;gap:0.35rem;border-color:rgba(255,200,80,0.4);">
+                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                            <div>
+                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
+                                <span style="color:#a9a9c8;margin:0 0.35rem;font-size:0.78rem;">→ pays →</span>
+                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
+                            </div>
+                            <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:0.95rem;">₹{amt:,.2f}</div>
+                        </div>
+                        <div style="font-size:0.7rem;color:#d4b87a;font-family:'Syne',sans-serif;letter-spacing:1px;text-transform:uppercase;">Pay via:</div>
+                        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+                            <a href="{phonepe_url}" title="Open PhonePe"
+                               style="text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;
+                                      background:#5f259f;border-radius:8px;padding:0.28rem 0.65rem;
+                                      font-size:0.72rem;font-weight:700;color:#fff;letter-spacing:0.3px;
+                                      font-family:'DM Sans',sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(95,37,159,0.4);">
+                                <svg width="13" height="13" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="20" cy="20" r="20" fill="#5f259f"/>
+                                    <path d="M11 20.5L17.5 14L26 22.5L22 26.5L17.5 22L14.5 25L11 20.5Z" fill="white"/>
+                                    <path d="M22 14H29L26 22.5L22 18.5V14Z" fill="#cbaaff"/>
+                                </svg>
+                                PhonePe
+                            </a>
+                            <a href="{gpay_url}" title="Open GPay"
+                               style="text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;
+                                      background:#fff;border-radius:8px;padding:0.28rem 0.65rem;
+                                      font-size:0.72rem;font-weight:700;color:#1a73e8;letter-spacing:0.3px;
+                                      font-family:'DM Sans',sans-serif;white-space:nowrap;box-shadow:0 2px 8px rgba(26,115,232,0.25);">
+                                <svg width="13" height="13" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="20" cy="20" r="20" fill="#fff"/>
+                                    <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle"
+                                          font-size="20" font-weight="900" fill="#1a73e8" font-family="Arial">G</text>
+                                </svg>
+                                GPay
+                            </a>
+                        </div>
+                    </div>"""
+                else:
+                    row_html = f"""
+                    <div class="owe-card" style="flex-direction:column;align-items:flex-start;gap:0.15rem;">
+                        <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
+                            <div>
+                                <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
+                                <span style="color:#a9a9c8;margin:0 0.35rem;font-size:0.78rem;">→ pays →</span>
+                                <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
+                            </div>
+                            <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:0.95rem;">₹{amt:,.2f}</div>
+                        </div>
+                    </div>"""
 
+                # ── Layout: card | buttons ─────────────────────────────────────
                 left_col, btn_col = st.columns([3, 1])
                 with left_col:
-                    if is_pair_settled:
-                        st.markdown(f"""
-                        <div class="owe-card" style="opacity:0.45;flex-direction:column;align-items:flex-start;gap:0.2rem;">
-                            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                                <div>
-                                    <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{debtor}</span>
-                                    <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
-                                    <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;text-decoration:line-through;">{creditor}</span>
-                                </div>
-                                <div style="color:#7df5b0;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹0.00 ✔</div>
-                            </div>
-                        </div>""", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"""
-                        <div class="owe-card" style="flex-direction:column;align-items:flex-start;gap:0.25rem;">
-                            <div style="display:flex;justify-content:space-between;width:100%;align-items:center;">
-                                <div>
-                                    <span style="color:#ff9a9a;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{debtor}</span>
-                                    <span style="color:#a9a9c8;margin:0 0.4rem;font-size:0.8rem;">→ pays →</span>
-                                    <span style="color:#90f3a5;font-weight:600;font-family:'Syne',sans-serif;font-size:0.88rem;">{creditor}</span>
-                                </div>
-                                <div style="color:#ffd200;font-weight:700;font-family:'Syne',sans-serif;font-size:1rem;">₹{amt:,.2f}</div>
-                            </div>
-                            {upi_icons_html}
-                        </div>""", unsafe_allow_html=True)
+                    st.markdown(row_html, unsafe_allow_html=True)
                 with btn_col:
-                    st.markdown("<div style='height:0.35rem'></div>", unsafe_allow_html=True)
-                    if is_pair_settled:
+                    st.markdown("<div style='height:0.3rem'></div>", unsafe_allow_html=True)
+                    if is_settled:
                         if st.button("↩ Undo", key=f"undo_{pair_key}", help="Mark as unsettled"):
                             st.session_state.settled_payments.discard(pair_key)
+                            st.session_state.pending_settle = None
                             st.rerun()
+                    elif is_picking_upi:
+                        # "Done — mark settled" + cancel side by side
+                        d1, d2 = st.columns(2)
+                        with d1:
+                            if st.button("✔ Done", key=f"done_{pair_key}", help="Mark as settled"):
+                                st.session_state.settled_payments.add(pair_key)
+                                st.session_state.pending_settle = None
+                                st.rerun()
+                        with d2:
+                            if st.button("✖", key=f"cancel_{pair_key}", help="Cancel"):
+                                st.session_state.pending_settle = None
+                                st.rerun()
                     else:
-                        if st.button("💰 Settle", key=f"settle_{pair_key}", help="Mark as paid"):
-                            st.session_state.settled_payments.add(pair_key)
+                        if st.button("💰 Settle", key=f"settle_{pair_key}", help="Choose payment app"):
+                            st.session_state.pending_settle = pair_key
                             st.rerun()
 
         grand = sum(e["amount"] for e in expenses)
