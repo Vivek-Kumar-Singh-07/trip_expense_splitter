@@ -162,19 +162,31 @@ def get_pwd_sheet():
     Tab called 'Passwords'. Columns: name | pwd_hash | is_default
     is_default = "yes"  →  user has never changed from the default password
     is_default = "no"   →  user has set their own password
-    On first creation, seeds every friend with DEFAULT_PASSWORD from Streamlit secrets.
+
+    FIX: Always checks for missing friends and seeds them,
+         not just on first creation. This prevents 'User not found'
+         if the sheet existed but was empty or partially seeded.
     """
     client      = get_client()
     spreadsheet = client.open(SHEET_NAME)
+
     try:
         pwd_sheet = spreadsheet.worksheet("Passwords")
     except gspread.WorksheetNotFound:
-        pwd_sheet    = spreadsheet.add_worksheet("Passwords", 20, 3)
+        pwd_sheet = spreadsheet.add_worksheet("Passwords", 20, 3)
         pwd_sheet.append_row(["name", "pwd_hash", "is_default"])
-        default_hash = hash_pwd(st.secrets["DEFAULT_PASSWORD"])
-        for friend in FRIENDS:
+
+    # Always ensure every friend has a row — seed any that are missing
+    records      = pwd_sheet.get_all_records()
+    existing     = {r["name"] for r in records}
+    default_hash = hash_pwd(st.secrets["DEFAULT_PASSWORD"])
+
+    for friend in FRIENDS:
+        if friend not in existing:
             pwd_sheet.append_row([friend, default_hash, "yes"])
+
     return pwd_sheet
+
 
 def load_pwd_map(pwd_sheet):
     """Returns { name: { "pwd_hash": str, "is_default": bool } }"""
@@ -189,6 +201,7 @@ def load_pwd_map(pwd_sheet):
             continue
     return pwd_map
 
+
 def update_password(pwd_sheet, name: str, new_pwd: str):
     """Update a user's hashed password and mark is_default = no."""
     records = pwd_sheet.get_all_records()
@@ -197,7 +210,7 @@ def update_password(pwd_sheet, name: str, new_pwd: str):
             row_num = i + 2   # +1 header, +1 for 1-based indexing
             pwd_sheet.update(f"B{row_num}:C{row_num}", [[hash_pwd(new_pwd), "no"]])
             return
-    # Fallback: user missing from sheet for some reason — add them
+    # Fallback: user missing from sheet — add them
     pwd_sheet.append_row([name, hash_pwd(new_pwd), "no"])
 
 # ─── Session State defaults ────────────────────────────────────────────────────
@@ -257,8 +270,8 @@ def show_login(pwd_sheet):
                 elif hash_pwd(pwd) != pwd_map[name]["pwd_hash"]:
                     st.error("❌ Wrong password!")
                 else:
-                    st.session_state.authenticated  = True
-                    st.session_state.current_user   = name
+                    st.session_state.authenticated   = True
+                    st.session_state.current_user    = name
                     st.session_state.must_change_pwd = pwd_map[name]["is_default"]
                     st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
@@ -299,9 +312,8 @@ def show_change_password(pwd_sheet, forced: bool = True):
         conf_pwd = st.text_input("Confirm password", type="password", placeholder="Repeat new password", key="conf_pwd")
         st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
 
-        btn_col1, btn_col2 = st.columns([3, 1]) if not forced else (st.columns([1, 1])[0], None)
         if forced:
-            save_clicked = st.button("Set My Password →", use_container_width=True, key="set_pwd_btn")
+            save_clicked   = st.button("Set My Password →", use_container_width=True, key="set_pwd_btn")
             cancel_clicked = False
         else:
             col_s, col_c = st.columns(2)
@@ -324,33 +336,40 @@ def show_change_password(pwd_sheet, forced: bool = True):
             else:
                 update_password(pwd_sheet, name, new_pwd.strip())
                 st.session_state.must_change_pwd = False
-                st.success("✅ Password updated!")
+                st.success("✅ Password updated! Loading your trip…")
                 st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# BOOT — connect sheets, run auth gates
+# BOOT — connect pwd sheet first, then run auth gates, then load expenses
 # ══════════════════════════════════════════════════════════════════════════════
 try:
-    sheet     = get_sheet()
     pwd_sheet = get_pwd_sheet()
     connected = True
 except Exception as e:
     st.error(f"❌ Google Sheets connection failed: {e}")
     st.stop()
 
-# Gate 1 — not logged in
+# Gate 1 — not logged in → show login screen
 if not st.session_state.authenticated:
     show_login(pwd_sheet)
     st.stop()
 
-# Gate 2 — must change default password before proceeding
+# Gate 2 — logged in but still on default password → force password change
+# This happens BEFORE any expense sheet is loaded, so the user never sees the app
 if st.session_state.must_change_pwd:
     show_change_password(pwd_sheet, forced=True)
     st.stop()
 
-# ─── Load expenses ─────────────────────────────────────────────────────────────
+# ─── Only now connect expense sheet & load data ────────────────────────────────
+try:
+    sheet = get_sheet()
+except Exception as e:
+    st.error(f"❌ Could not load expense sheet: {e}")
+    st.stop()
+
+# ─── Load / Save helpers ───────────────────────────────────────────────────────
 def load_expenses(sheet):
     rows = []
     for r in sheet.get_all_records():
@@ -519,7 +538,7 @@ with col_left:
                     "per_head":     per_head,
                 })
                 st.success(f"✅ Saved ₹{amount:,.2f} for '{description.strip()}'")
-                st.session_state.show_all     = False
+                st.session_state.show_all      = False
                 st.session_state.form_reset_key += 1
                 st.rerun()
 
