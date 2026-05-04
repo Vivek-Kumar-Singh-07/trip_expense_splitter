@@ -540,9 +540,10 @@ with col_left:
                             f'title="Edit your expense">✏️</a>'
                         )
                     else:
+                        payer = exp["paid_by"]
                         edit_btn_html = (
                             f'<span style="font-size:0.85rem;opacity:0.18;cursor:not-allowed;" '
-                            f'title="Only {exp[\"paid_by\"]} can edit this">✏️</span>'
+                            f'title="Only {payer} can edit this">✏️</span>'
                         )
 
                     st.markdown(f"""
