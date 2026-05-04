@@ -14,7 +14,7 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Tiger background on html+body — Streamlit does not override these */
+/* Tiger background on html+body */
 html, body {
     background-color: #050e04 !important;
     background-image:
@@ -26,12 +26,11 @@ html, body {
     background-repeat: no-repeat !important;
 }
 
-/* Make Streamlit wrapper divs transparent so body bg shows through */
+/* Make Streamlit wrapper divs transparent */
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
     background: transparent !important;
 }
 
-/* All content above bg */
 .main .block-container { position:relative; z-index:1; }
 header { position:relative; z-index:1; }
 
@@ -63,18 +62,36 @@ header { position:relative; z-index:1; }
     margin-top:0.15rem;
     letter-spacing:1px;
 }
+.hero-user {
+    font-size:0.8rem;
+    color:#90f3a5;
+    font-family:'Syne',sans-serif;
+    font-weight:600;
+    margin-top:0.3rem;
+    letter-spacing:0.5px;
+}
 
-/* Expense cards — compact */
+/* Login box */
+.login-box {
+    background: rgba(20,35,20,0.7);
+    border: 1px solid rgba(210,160,60,0.3);
+    border-radius: 16px;
+    padding: 2rem 1.8rem;
+    backdrop-filter: blur(8px);
+    max-width: 360px;
+    margin: 3rem auto;
+}
+
+/* Expense cards */
 .expense-card { background:rgba(180,100,10,0.1); border:1px solid rgba(220,150,50,0.25); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
 
-/* Owe cards — compact */
+/* Owe cards */
 .owe-card { background:rgba(200,60,60,0.08); border:1px solid rgba(220,100,100,0.22); border-radius:10px; padding:0.55rem 0.9rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(4px); }
 
 .settled { background:rgba(50,180,100,0.1); border:1px solid rgba(80,220,130,0.3); border-radius:10px; padding:0.9rem; text-align:center; color:#7df5b0; font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; }
 
 .section-label { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#d4a84b; margin-bottom:0.6rem; }
 
-/* Total boxes — compact */
 .total-box { background:rgba(30,50,30,0.35); border:1px solid rgba(180,140,60,0.2); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.45rem; backdrop-filter:blur(4px); }
 
 .fancy-divider { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(210,160,60,0.5),transparent); margin:1rem 0; }
@@ -96,7 +113,7 @@ div[data-testid="column"] .stButton > button {
     min-width: unset;
 }
 
-/* Mobile friendly — tighter spacing */
+/* Mobile friendly */
 @media (max-width: 768px) {
     .hero { padding: 0.6rem 0.5rem 0.4rem; margin-bottom: 0.4rem; }
     .hero h1 { font-size: 1.3rem; }
@@ -107,13 +124,12 @@ div[data-testid="column"] .stButton > button {
     .fancy-divider { margin: 0.4rem 0; }
     .section-label { margin-bottom: 0.3rem; font-size:0.62rem; }
     .main .block-container { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
+    .login-box { margin: 1.5rem auto; padding: 1.4rem 1rem; }
 }
 
-/* Tighten globally */
 .main .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
 div[data-testid="stVerticalBlock"] > div { gap: 0.25rem !important; }
 
-/* Icon buttons — tiny and perfectly inline */
 div[data-testid="column"] .stButton > button {
     padding: 0.05rem 0.3rem !important;
     font-size: 0.8rem !important;
@@ -127,7 +143,7 @@ div[data-testid="column"] .stButton > button {
     height: auto !important;
     margin-top: 0.3rem !important;
 }
-/* Settle / Undo buttons — small pill style */
+
 button[kind="secondary"][data-testid*="settle_"],
 button[kind="secondary"][data-testid*="undo_"],
 div[data-testid="column"] button[data-testid*="settle"],
@@ -155,8 +171,6 @@ SHEET_NAME = "TripExpenseSplitter"
 HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 IST        = timezone(timedelta(hours=5, minutes=30))
 
-# ── UPI IDs: replace with each person's real UPI VPA ──────────────────────────
-# Format: phonenumber@upi  OR  name@okaxis  OR  name@ybl  etc.
 UPI_IDS = {
     "Sanjeet": "sanjeet@upi",
     "Kundan":  "kundan@upi",
@@ -165,6 +179,74 @@ UPI_IDS = {
     "Govind":  "govind@upi",
     "Vivek":   "vivek@upi",
 }
+
+# ─── Password Gate ─────────────────────────────────────────────────────────────
+def check_password():
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.markdown("""
+    <div style="text-align:center;padding-top:1.5rem;">
+        <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;
+                    background:linear-gradient(90deg,#ffb347,#ffd200,#ff8c00);
+                    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                    background-clip:text;margin-bottom:0.2rem;">
+            🐯 Trip Expense Tracker
+        </div>
+        <div style="color:#d4b87a;font-size:0.9rem;letter-spacing:2px;margin-bottom:0.2rem;">
+            PENCH WILDLIFE TRIP
+        </div>
+        <div style="color:#a9a9c8;font-size:0.78rem;margin-bottom:1.5rem;">
+            Sign in to access the trip expenses
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 1.4, 1])
+    with col2:
+        st.markdown('<div class="login-box">', unsafe_allow_html=True)
+
+        name = st.selectbox(
+            "👤 Who are you?",
+            ["— select your name —"] + FRIENDS,
+            key="login_name"
+        )
+        pwd = st.text_input(
+            "🔑 Trip password",
+            type="password",
+            placeholder="Ask the group chat…",
+            key="login_pwd"
+        )
+
+        st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+
+        if st.button("Enter the Trip →", use_container_width=True):
+            if name == "— select your name —":
+                st.error("Please select your name.")
+            elif pwd != st.secrets["APP_PASSWORD"]:
+                st.error("❌ Wrong password. Check the group chat!")
+            else:
+                st.session_state.authenticated = True
+                st.session_state.current_user  = name
+                st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    return False
+
+# ─── Session State ─────────────────────────────────────────────────────────────
+if "show_all"          not in st.session_state: st.session_state.show_all          = False
+if "editing_idx"       not in st.session_state: st.session_state.editing_idx       = None
+if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key    = 0
+if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
+if "pending_settle"    not in st.session_state: st.session_state.pending_settle    = None
+if "pending_delete"    not in st.session_state: st.session_state.pending_delete    = None
+if "authenticated"     not in st.session_state: st.session_state.authenticated     = False
+if "current_user"      not in st.session_state: st.session_state.current_user      = None
+
+# ─── Run password gate FIRST — nothing else renders until authenticated ────────
+if not check_password():
+    st.stop()
 
 # ─── Google Sheets ─────────────────────────────────────────────────────────────
 @st.cache_resource
@@ -210,14 +292,12 @@ def save_expense(sheet, exp):
     ])
 
 def update_expense_in_sheet(sheet, row_index, exp):
-    """row_index is 1-based, +1 for header row"""
     sheet.update(f"A{row_index}:G{row_index}", [[
         exp["timestamp"], exp["paid_by"], exp["description"], exp["amount"],
         ",".join(exp["split_with"]), ",".join(exp["all_involved"]), exp["per_head"],
     ]])
 
 def delete_expense_from_sheet(sheet, row_index):
-    """row_index is 1-based, +1 for header row"""
     sheet.delete_rows(row_index)
 
 # ─── Connect & Load ────────────────────────────────────────────────────────────
@@ -230,18 +310,27 @@ except Exception as e:
     expenses  = []
     connected = False
 
-# ─── Session State ─────────────────────────────────────────────────────────────
-if "show_all"          not in st.session_state: st.session_state.show_all          = False
-if "editing_idx"       not in st.session_state: st.session_state.editing_idx       = None
-if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key    = 0
-# Set of "debtor|creditor" pairs that have been manually settled
-if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
-# pair_key currently showing UPI picker
-if "pending_settle"    not in st.session_state: st.session_state.pending_settle    = None
-if "pending_delete"    not in st.session_state: st.session_state.pending_delete    = None
+# ─── Hero (shown after login) ──────────────────────────────────────────────────
+current_user = st.session_state.current_user
 
-# ─── Hero ──────────────────────────────────────────────────────────────────────
-st.markdown('<div class="hero"><h1>Trip Expense Tracker</h1><h2>🐯🌴 PENCH WILDLIFE TRIP</h2></div>', unsafe_allow_html=True)
+hero_col, logout_col = st.columns([5, 1])
+with hero_col:
+    st.markdown(
+        f'<div class="hero">'
+        f'<h1>Trip Expense Tracker</h1>'
+        f'<h2>🐯🌴 PENCH WILDLIFE TRIP</h2>'
+        f'<div class="hero-user">👤 Logged in as {current_user}</div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+with logout_col:
+    st.markdown("<div style='height:2.8rem'></div>", unsafe_allow_html=True)
+    if st.button("🚪 Logout", help="Sign out"):
+        for key in ["authenticated", "current_user", "editing_idx",
+                    "pending_delete", "pending_settle", "settled_payments",
+                    "show_all", "form_reset_key"]:
+            st.session_state.pop(key, None)
+        st.rerun()
 
 col_left, col_right = st.columns([1, 1.1], gap="large")
 
@@ -250,21 +339,21 @@ col_left, col_right = st.columns([1, 1.1], gap="large")
 # ══════════════════════════════════════════════════
 with col_left:
 
-    # ── Add / Edit Form ────────────────────────────────────────────────────────
     is_editing = st.session_state.editing_idx is not None
     edit_exp   = expenses[st.session_state.editing_idx] if is_editing else None
-
-    # Unique suffix so widgets fully reset after a successful add
-    fk = st.session_state.form_reset_key
+    fk         = st.session_state.form_reset_key
 
     st.markdown(
         f'<div class="section-label">{"✏️ Edit Expense" if is_editing else "💳 Add Expense"}</div>',
         unsafe_allow_html=True
     )
 
+    # When adding, default paid_by to current user
+    default_paid_by_idx = FRIENDS.index(current_user) if current_user in FRIENDS else 0
+
     paid_by = st.selectbox(
         "Who paid?", FRIENDS,
-        index=FRIENDS.index(edit_exp["paid_by"]) if is_editing else 0,
+        index=FRIENDS.index(edit_exp["paid_by"]) if is_editing else default_paid_by_idx,
         key=f"paid_by_{fk}"
     )
     description = st.text_input(
@@ -324,7 +413,7 @@ with col_left:
                         "all_involved": all_involved,
                         "per_head":     per_head,
                     }
-                    row_index = st.session_state.editing_idx + 2  # +1 header, +1 1-based
+                    row_index = st.session_state.editing_idx + 2
                     update_expense_in_sheet(sheet, row_index, updated)
                     st.session_state.editing_idx = None
                     st.success("✅ Expense updated!")
@@ -346,7 +435,6 @@ with col_left:
             else:
                 all_involved = list(set([paid_by] + split_with))
                 per_head     = round(amount / len(all_involved), 2)
-                # Use IST for timestamp
                 ist_now      = datetime.now(IST).strftime("%Y-%m-%d %H:%M IST")
                 save_expense(sheet, {
                     "timestamp":    ist_now,
@@ -359,7 +447,6 @@ with col_left:
                 })
                 st.success(f"✅ Saved ₹{amount:,.2f} for '{description.strip()}'")
                 st.session_state.show_all    = False
-                # ↓ Bump key to reset all form widgets to defaults
                 st.session_state.form_reset_key += 1
                 st.rerun()
 
@@ -398,20 +485,27 @@ with col_left:
         if not filtered:
             st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
-            # Handle edit via query params (delete now uses session state confirm)
+            # Handle edit via query params
             qp = st.query_params
             if "edit" in qp:
                 try:
-                    st.session_state.editing_idx = int(qp["edit"])
-                except: pass
+                    idx = int(qp["edit"])
+                    # ── OWNER CHECK: only the payer can edit ──
+                    if expenses[idx]["paid_by"] == current_user:
+                        st.session_state.editing_idx = idx
+                    else:
+                        st.warning(f"⛔ Only {expenses[idx]['paid_by']} can edit that expense.")
+                except Exception:
+                    pass
                 st.query_params.clear()
                 st.rerun()
 
             for orig_idx, exp in showing:
                 is_confirm_delete = st.session_state.pending_delete == orig_idx
+                # ── Owner check ──────────────────────────────────────────────
+                is_owner = (current_user == exp["paid_by"])
 
                 if is_confirm_delete:
-                    # ── Confirm delete state ───────────────────────────────────
                     st.markdown(f"""
                     <div class="expense-card" style="border-color:rgba(255,80,80,0.5);background:rgba(200,40,40,0.12);">
                         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
@@ -427,14 +521,30 @@ with col_left:
                         if st.button("🗑️ Yes, delete", key=f"confirm_del_{orig_idx}"):
                             delete_expense_from_sheet(sheet, orig_idx + 2)
                             st.session_state.pending_delete = None
-                            st.session_state.editing_idx = None
+                            st.session_state.editing_idx    = None
                             st.rerun()
                     with c2:
                         if st.button("✖ Cancel", key=f"cancel_del_{orig_idx}"):
                             st.session_state.pending_delete = None
                             st.rerun()
+
                 else:
-                    # ── Normal expense card ────────────────────────────────────
+                    # ── Normal expense card ──────────────────────────────────
+                    # Edit icon: clickable for owner, dimmed for others
+                    if is_owner:
+                        edit_btn_html = (
+                            f'<a href="?edit={orig_idx}" target="_self" '
+                            f'style="text-decoration:none;background:rgba(255,255,255,0.08);'
+                            f'border:1px solid rgba(210,160,60,0.3);border-radius:6px;'
+                            f'padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" '
+                            f'title="Edit your expense">✏️</a>'
+                        )
+                    else:
+                        edit_btn_html = (
+                            f'<span style="font-size:0.85rem;opacity:0.18;cursor:not-allowed;" '
+                            f'title="Only {exp[\"paid_by\"]} can edit this">✏️</span>'
+                        )
+
                     st.markdown(f"""
                     <div class="expense-card">
                         <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;">
@@ -446,18 +556,18 @@ with col_left:
                             </div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;flex-shrink:0;">
                                 <div style="font-size:0.95rem;font-weight:700;color:#f7971e;font-family:'Syne',sans-serif;white-space:nowrap;">₹{exp['amount']:,.2f}</div>
-                                <div style="display:flex;gap:0.3rem;">
-                                    <a href="?edit={orig_idx}" target="_self" style="text-decoration:none;background:rgba(255,255,255,0.08);border:1px solid rgba(210,160,60,0.3);border-radius:6px;padding:0.15rem 0.4rem;font-size:0.85rem;cursor:pointer;" title="Edit">✏️</a>
-                                </div>
+                                <div style="display:flex;gap:0.3rem;">{edit_btn_html}</div>
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
-                    # Delete button rendered below card so Streamlit can handle it
-                    _, del_col = st.columns([5, 1])
-                    with del_col:
-                        if st.button("🗑️", key=f"del_{orig_idx}", help="Delete expense"):
-                            st.session_state.pending_delete = orig_idx
-                            st.rerun()
+
+                    # Delete button — only rendered for owner
+                    if is_owner:
+                        _, del_col = st.columns([5, 1])
+                        with del_col:
+                            if st.button("🗑️", key=f"del_{orig_idx}", help="Delete your expense"):
+                                st.session_state.pending_delete = orig_idx
+                                st.rerun()
 
             if not st.session_state.show_all and total_filtered > 5:
                 st.markdown(f'<div style="text-align:center;color:#a9a9c8;font-size:0.75rem;margin-top:0.2rem;">+ {total_filtered - 5} more · click "Show All"</div>', unsafe_allow_html=True)
@@ -531,14 +641,8 @@ with col_right:
                 payee_upi  = UPI_IDS.get(creditor, "")
                 payee_name = creditor
 
-                # Universal upi://pay — works on Android across all apps (PhonePe, GPay, Paytm…)
-                # PhonePe-specific deep link (Android only)
-                # GPay/Tez deep link (Android only)
-                upi_base      = f"upi://pay?pa={payee_upi}&pn={payee_name}&am={amt_str}&cu=INR&tn={upi_note}"
-                phonepe_url   = f"phonepe://pay?pa={payee_upi}&pn={payee_name}&am={amt_str}&cu=INR&tn={upi_note}"
-                gpay_url      = f"tez://upi/pay?pa={payee_upi}&pn={payee_name}&am={amt_str}&cu=INR&tn={upi_note}"
+                upi_base    = f"upi://pay?pa={payee_upi}&pn={payee_name}&am={amt_str}&cu=INR&tn={upi_note}"
 
-                # ── Row HTML ──────────────────────────────────────────────────
                 if is_settled:
                     row_html = f"""
                     <div class="owe-card" style="opacity:0.4;flex-direction:column;align-items:flex-start;gap:0.15rem;">
@@ -569,11 +673,6 @@ with col_right:
                                   font-size:0.78rem;font-weight:700;color:#fff;
                                   font-family:'Syne',sans-serif;white-space:nowrap;
                                   box-shadow:0 2px 10px rgba(26,158,82,0.4);letter-spacing:0.3px;">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
-                                <path d="M12 7v5l3 3" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-                                <path d="M8 12h8M14 9l3 3-3 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
                             Open UPI App
                         </a>
                     </div>"""
@@ -590,7 +689,6 @@ with col_right:
                         </div>
                     </div>"""
 
-                # ── Layout: card | buttons ─────────────────────────────────────
                 left_col, btn_col = st.columns([3, 1])
                 with left_col:
                     st.markdown(row_html, unsafe_allow_html=True)
@@ -602,7 +700,6 @@ with col_right:
                             st.session_state.pending_settle = None
                             st.rerun()
                     elif is_picking_upi:
-                        # "Done — mark settled" + cancel side by side
                         d1, d2 = st.columns(2)
                         with d1:
                             if st.button("✔ Done", key=f"done_{pair_key}", help="Mark as settled"):
@@ -614,7 +711,7 @@ with col_right:
                                 st.session_state.pending_settle = None
                                 st.rerun()
                     else:
-                        if st.button("💰 Settle", key=f"settle_{pair_key}", help="Choose payment app"):
+                        if st.button("💰 Settle", key=f"settle_{pair_key}", help="Pay via UPI"):
                             st.session_state.pending_settle = pair_key
                             st.rerun()
 
