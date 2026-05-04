@@ -1,5 +1,6 @@
 import streamlit as st
 import gspread
+import hashlib
 from google.oauth2.service_account import Credentials
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
@@ -14,7 +15,6 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 h1, h2, h3 { font-family: 'Syne', sans-serif; }
 
-/* Tiger background on html+body */
 html, body {
     background-color: #050e04 !important;
     background-image:
@@ -26,7 +26,6 @@ html, body {
     background-repeat: no-repeat !important;
 }
 
-/* Make Streamlit wrapper divs transparent */
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
     background: transparent !important;
 }
@@ -34,86 +33,49 @@ html, body {
 .main .block-container { position:relative; z-index:1; }
 header { position:relative; z-index:1; }
 
-/* Hero */
 .hero {
-    text-align:center;
-    padding:1rem 1rem 0.6rem;
-    margin-bottom:0.6rem;
-    position:relative;
-    z-index:1;
+    text-align:center; padding:1rem 1rem 0.6rem;
+    margin-bottom:0.6rem; position:relative; z-index:1;
 }
 .hero h1 {
-    font-size:1.9rem;
-    font-weight:800;
+    font-size:1.9rem; font-weight:800;
     background:linear-gradient(90deg,#ffb347,#ffd200,#ff8c00);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
-    letter-spacing:-0.5px;
-    margin-bottom:0;
-    line-height:1.2;
-    white-space:normal;
-    word-break:keep-all;
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text; letter-spacing:-0.5px; margin-bottom:0;
+    line-height:1.2; white-space:normal; word-break:keep-all;
 }
-.hero h2 {
-    font-size:0.95rem;
-    color:#d4b87a;
-    font-weight:400;
-    margin-top:0.15rem;
-    letter-spacing:1px;
-}
-.hero-user {
-    font-size:0.8rem;
-    color:#90f3a5;
-    font-family:'Syne',sans-serif;
-    font-weight:600;
-    margin-top:0.3rem;
-    letter-spacing:0.5px;
-}
+.hero h2 { font-size:0.95rem; color:#d4b87a; font-weight:400; margin-top:0.15rem; letter-spacing:1px; }
+.hero-user { font-size:0.8rem; color:#90f3a5; font-family:'Syne',sans-serif; font-weight:600; margin-top:0.3rem; letter-spacing:0.5px; }
 
-/* Login box */
 .login-box {
-    background: rgba(20,35,20,0.7);
+    background: rgba(20,35,20,0.75);
     border: 1px solid rgba(210,160,60,0.3);
-    border-radius: 16px;
-    padding: 2rem 1.8rem;
-    backdrop-filter: blur(8px);
-    max-width: 360px;
-    margin: 3rem auto;
+    border-radius: 16px; padding: 2rem 1.8rem;
+    backdrop-filter: blur(8px); max-width: 380px; margin: 2rem auto;
+}
+.pwd-change-box {
+    background: rgba(20,35,20,0.75);
+    border: 1px solid rgba(255,200,60,0.45);
+    border-radius: 16px; padding: 2rem 1.8rem;
+    backdrop-filter: blur(8px); max-width: 380px; margin: 2rem auto;
 }
 
-/* Expense cards */
 .expense-card { background:rgba(180,100,10,0.1); border:1px solid rgba(220,150,50,0.25); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.5rem; backdrop-filter:blur(4px); }
-
-/* Owe cards */
 .owe-card { background:rgba(200,60,60,0.08); border:1px solid rgba(220,100,100,0.22); border-radius:10px; padding:0.55rem 0.9rem; margin-bottom:0.45rem; display:flex; justify-content:space-between; align-items:center; backdrop-filter:blur(4px); }
-
 .settled { background:rgba(50,180,100,0.1); border:1px solid rgba(80,220,130,0.3); border-radius:10px; padding:0.9rem; text-align:center; color:#7df5b0; font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; }
-
 .section-label { font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#d4a84b; margin-bottom:0.6rem; }
-
 .total-box { background:rgba(30,50,30,0.35); border:1px solid rgba(180,140,60,0.2); border-radius:10px; padding:0.6rem 0.9rem; margin-bottom:0.45rem; backdrop-filter:blur(4px); }
-
 .fancy-divider { border:none; height:1px; background:linear-gradient(90deg,transparent,rgba(210,160,60,0.5),transparent); margin:1rem 0; }
-
 .count-badge { background:rgba(210,160,60,0.2); border:1px solid rgba(210,160,60,0.4); border-radius:50px; padding:0.1rem 0.5rem; font-size:0.7rem; color:#ffd97d; font-family:'Syne',sans-serif; font-weight:700; margin-left:0.4rem; }
 
-/* Primary button */
 .stButton > button { background:linear-gradient(90deg,#b45a00,#e07b00); color:#fff; font-family:'Syne',sans-serif; font-weight:700; border:none; border-radius:10px; padding:0.5rem 1.2rem; font-size:0.95rem; width:100%; }
 
-/* Edit/Delete small icon buttons */
 div[data-testid="column"] .stButton > button {
-    padding: 0.2rem 0.55rem;
-    font-size: 1rem;
-    border-radius: 7px;
-    background: rgba(255,255,255,0.07);
-    color: #e8d5a0;
-    border: 1px solid rgba(210,160,60,0.25);
-    width: auto;
-    min-width: unset;
+    padding: 0.2rem 0.55rem; font-size: 1rem; border-radius: 7px;
+    background: rgba(255,255,255,0.07); color: #e8d5a0;
+    border: 1px solid rgba(210,160,60,0.25); width: auto; min-width: unset;
 }
 
-/* Mobile friendly */
 @media (max-width: 768px) {
     .hero { padding: 0.6rem 0.5rem 0.4rem; margin-bottom: 0.4rem; }
     .hero h1 { font-size: 1.3rem; }
@@ -124,43 +86,30 @@ div[data-testid="column"] .stButton > button {
     .fancy-divider { margin: 0.4rem 0; }
     .section-label { margin-bottom: 0.3rem; font-size:0.62rem; }
     .main .block-container { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; padding-left: 0.4rem !important; padding-right: 0.4rem !important; }
-    .login-box { margin: 1.5rem auto; padding: 1.4rem 1rem; }
+    .login-box, .pwd-change-box { margin: 1.2rem auto; padding: 1.4rem 1rem; }
 }
 
 .main .block-container { padding-top: 0.8rem !important; padding-bottom: 0.8rem !important; }
 div[data-testid="stVerticalBlock"] > div { gap: 0.25rem !important; }
 
 div[data-testid="column"] .stButton > button {
-    padding: 0.05rem 0.3rem !important;
-    font-size: 0.8rem !important;
-    border-radius: 6px !important;
-    background: rgba(255,255,255,0.07) !important;
-    color: #e8d5a0 !important;
-    border: 1px solid rgba(210,160,60,0.2) !important;
-    width: auto !important;
-    min-width: unset !important;
-    line-height: 1.4 !important;
-    height: auto !important;
-    margin-top: 0.3rem !important;
+    padding: 0.05rem 0.3rem !important; font-size: 0.8rem !important;
+    border-radius: 6px !important; background: rgba(255,255,255,0.07) !important;
+    color: #e8d5a0 !important; border: 1px solid rgba(210,160,60,0.2) !important;
+    width: auto !important; min-width: unset !important;
+    line-height: 1.4 !important; height: auto !important; margin-top: 0.3rem !important;
 }
 
 button[kind="secondary"][data-testid*="settle_"],
 button[kind="secondary"][data-testid*="undo_"],
 div[data-testid="column"] button[data-testid*="settle"],
 div[data-testid="column"] button[data-testid*="undo"] {
-    padding: 0.12rem 0.45rem !important;
-    font-size: 0.72rem !important;
-    border-radius: 50px !important;
-    background: rgba(255,200,50,0.12) !important;
-    color: #ffd97d !important;
-    border: 1px solid rgba(210,160,60,0.35) !important;
-    width: auto !important;
-    min-width: unset !important;
-    line-height: 1.5 !important;
-    height: auto !important;
-    margin-top: 0.55rem !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-weight: 500 !important;
+    padding: 0.12rem 0.45rem !important; font-size: 0.72rem !important;
+    border-radius: 50px !important; background: rgba(255,200,50,0.12) !important;
+    color: #ffd97d !important; border: 1px solid rgba(210,160,60,0.35) !important;
+    width: auto !important; min-width: unset !important;
+    line-height: 1.5 !important; height: auto !important; margin-top: 0.55rem !important;
+    font-family: 'DM Sans', sans-serif !important; font-weight: 500 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -180,11 +129,94 @@ UPI_IDS = {
     "Vivek":   "vivek@upi",
 }
 
-# ─── Password Gate ─────────────────────────────────────────────────────────────
-def check_password():
-    if st.session_state.get("authenticated"):
-        return True
+# ─── Helpers ───────────────────────────────────────────────────────────────────
+def hash_pwd(pwd: str) -> str:
+    """SHA-256 hash — passwords are never stored as plain text in the sheet."""
+    return hashlib.sha256(pwd.strip().encode()).hexdigest()
 
+# ─── Google Sheets client (cached) ─────────────────────────────────────────────
+@st.cache_resource
+def get_client():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+    return gspread.authorize(creds)
+
+# ─── Expense sheet (Tab 1) ─────────────────────────────────────────────────────
+def get_sheet():
+    client = get_client()
+    try:
+        spreadsheet = client.open(SHEET_NAME)
+    except gspread.SpreadsheetNotFound:
+        spreadsheet = client.create(SHEET_NAME)
+    try:
+        sheet = spreadsheet.sheet1
+    except Exception:
+        sheet = spreadsheet.add_worksheet("Expenses", 1000, 10)
+    if sheet.row_values(1) != HEADERS:
+        sheet.insert_row(HEADERS, 1)
+    return sheet
+
+# ─── Password sheet (Tab 2) ────────────────────────────────────────────────────
+def get_pwd_sheet():
+    """
+    Tab called 'Passwords'. Columns: name | pwd_hash | is_default
+    is_default = "yes"  →  user has never changed from the default password
+    is_default = "no"   →  user has set their own password
+    On first creation, seeds every friend with DEFAULT_PASSWORD from Streamlit secrets.
+    """
+    client      = get_client()
+    spreadsheet = client.open(SHEET_NAME)
+    try:
+        pwd_sheet = spreadsheet.worksheet("Passwords")
+    except gspread.WorksheetNotFound:
+        pwd_sheet    = spreadsheet.add_worksheet("Passwords", 20, 3)
+        pwd_sheet.append_row(["name", "pwd_hash", "is_default"])
+        default_hash = hash_pwd(st.secrets["DEFAULT_PASSWORD"])
+        for friend in FRIENDS:
+            pwd_sheet.append_row([friend, default_hash, "yes"])
+    return pwd_sheet
+
+def load_pwd_map(pwd_sheet):
+    """Returns { name: { "pwd_hash": str, "is_default": bool } }"""
+    pwd_map = {}
+    for row in pwd_sheet.get_all_records():
+        try:
+            pwd_map[row["name"]] = {
+                "pwd_hash":   row["pwd_hash"],
+                "is_default": row["is_default"] == "yes",
+            }
+        except Exception:
+            continue
+    return pwd_map
+
+def update_password(pwd_sheet, name: str, new_pwd: str):
+    """Update a user's hashed password and mark is_default = no."""
+    records = pwd_sheet.get_all_records()
+    for i, row in enumerate(records):
+        if row["name"] == name:
+            row_num = i + 2   # +1 header, +1 for 1-based indexing
+            pwd_sheet.update(f"B{row_num}:C{row_num}", [[hash_pwd(new_pwd), "no"]])
+            return
+    # Fallback: user missing from sheet for some reason — add them
+    pwd_sheet.append_row([name, hash_pwd(new_pwd), "no"])
+
+# ─── Session State defaults ────────────────────────────────────────────────────
+for _k, _v in {
+    "authenticated":    False,
+    "current_user":     None,
+    "must_change_pwd":  False,
+    "show_all":         False,
+    "editing_idx":      None,
+    "form_reset_key":   0,
+    "settled_payments": set(),
+    "pending_settle":   None,
+    "pending_delete":   None,
+}.items():
+    if _k not in st.session_state:
+        st.session_state[_k] = _v
+
+# ─── Shared login header ────────────────────────────────────────────────────────
+def render_login_header():
     st.markdown("""
     <div style="text-align:center;padding-top:1.5rem;">
         <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;
@@ -196,83 +228,134 @@ def check_password():
         <div style="color:#d4b87a;font-size:0.9rem;letter-spacing:2px;margin-bottom:0.2rem;">
             PENCH WILDLIFE TRIP
         </div>
-        <div style="color:#a9a9c8;font-size:0.78rem;margin-bottom:1.5rem;">
-            Sign in to access the trip expenses
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.4, 1])
-    with col2:
+# ══════════════════════════════════════════════════════════════════════════════
+# SCREEN 1 — Login
+# ══════════════════════════════════════════════════════════════════════════════
+def show_login(pwd_sheet):
+    render_login_header()
+    st.markdown(
+        '<div style="color:#a9a9c8;font-size:0.78rem;text-align:center;margin-bottom:1rem;">'
+        'Sign in to access the trip expenses</div>',
+        unsafe_allow_html=True
+    )
+    c1, c2, c3 = st.columns([1, 1.4, 1])
+    with c2:
         st.markdown('<div class="login-box">', unsafe_allow_html=True)
-
-        name = st.selectbox(
-            "👤 Who are you?",
-            ["— select your name —"] + FRIENDS,
-            key="login_name"
-        )
-        pwd = st.text_input(
-            "🔑 Trip password",
-            type="password",
-            placeholder="Ask the group chat…",
-            key="login_pwd"
-        )
-
+        name = st.selectbox("👤 Who are you?", ["— select your name —"] + FRIENDS, key="login_name")
+        pwd  = st.text_input("🔑 Password", type="password", placeholder="Enter your password…", key="login_pwd")
         st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
-
-        if st.button("Enter the Trip →", use_container_width=True):
+        if st.button("Enter the Trip →", use_container_width=True, key="login_btn"):
             if name == "— select your name —":
                 st.error("Please select your name.")
-            elif pwd != st.secrets["APP_PASSWORD"]:
-                st.error("❌ Wrong password. Check the group chat!")
             else:
-                st.session_state.authenticated = True
-                st.session_state.current_user  = name
+                pwd_map = load_pwd_map(pwd_sheet)
+                if name not in pwd_map:
+                    st.error("❌ User not found. Contact the trip admin.")
+                elif hash_pwd(pwd) != pwd_map[name]["pwd_hash"]:
+                    st.error("❌ Wrong password!")
+                else:
+                    st.session_state.authenticated  = True
+                    st.session_state.current_user   = name
+                    st.session_state.must_change_pwd = pwd_map[name]["is_default"]
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SCREEN 2 — First-login / voluntary password change
+# ══════════════════════════════════════════════════════════════════════════════
+def show_change_password(pwd_sheet, forced: bool = True):
+    render_login_header()
+    name = st.session_state.current_user
+
+    c1, c2, c3 = st.columns([1, 1.4, 1])
+    with c2:
+        st.markdown('<div class="pwd-change-box">', unsafe_allow_html=True)
+
+        if forced:
+            st.markdown(f"""
+            <div style="margin-bottom:1rem;">
+                <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#ffd200;margin-bottom:0.3rem;">
+                    👋 Welcome, {name}!
+                </div>
+                <div style="font-size:0.82rem;color:#d4b87a;line-height:1.6;">
+                    You're using the <b>default password</b>.<br>
+                    Set your own personal password to continue.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="margin-bottom:1rem;">
+                <div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#ffd200;margin-bottom:0.3rem;">
+                    🔑 Change Password — {name}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        new_pwd  = st.text_input("New password", type="password", placeholder="Min 4 characters", key="new_pwd")
+        conf_pwd = st.text_input("Confirm password", type="password", placeholder="Repeat new password", key="conf_pwd")
+        st.markdown("<div style='height:0.4rem'></div>", unsafe_allow_html=True)
+
+        btn_col1, btn_col2 = st.columns([3, 1]) if not forced else (st.columns([1, 1])[0], None)
+        if forced:
+            save_clicked = st.button("Set My Password →", use_container_width=True, key="set_pwd_btn")
+            cancel_clicked = False
+        else:
+            col_s, col_c = st.columns(2)
+            with col_s:
+                save_clicked   = st.button("💾 Save", use_container_width=True, key="set_pwd_btn")
+            with col_c:
+                cancel_clicked = st.button("✖ Cancel", use_container_width=True, key="cancel_pwd_btn")
+
+        if cancel_clicked:
+            st.session_state.must_change_pwd = False
+            st.rerun()
+
+        if save_clicked:
+            if len(new_pwd.strip()) < 4:
+                st.error("Password must be at least 4 characters.")
+            elif new_pwd != conf_pwd:
+                st.error("Passwords don't match — try again.")
+            elif new_pwd.strip() == st.secrets["DEFAULT_PASSWORD"]:
+                st.error("Please choose a different password from the default one.")
+            else:
+                update_password(pwd_sheet, name, new_pwd.strip())
+                st.session_state.must_change_pwd = False
+                st.success("✅ Password updated!")
                 st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    return False
-
-# ─── Session State ─────────────────────────────────────────────────────────────
-if "show_all"          not in st.session_state: st.session_state.show_all          = False
-if "editing_idx"       not in st.session_state: st.session_state.editing_idx       = None
-if "form_reset_key"    not in st.session_state: st.session_state.form_reset_key    = 0
-if "settled_payments"  not in st.session_state: st.session_state.settled_payments  = set()
-if "pending_settle"    not in st.session_state: st.session_state.pending_settle    = None
-if "pending_delete"    not in st.session_state: st.session_state.pending_delete    = None
-if "authenticated"     not in st.session_state: st.session_state.authenticated     = False
-if "current_user"      not in st.session_state: st.session_state.current_user      = None
-
-# ─── Run password gate FIRST — nothing else renders until authenticated ────────
-if not check_password():
+# ══════════════════════════════════════════════════════════════════════════════
+# BOOT — connect sheets, run auth gates
+# ══════════════════════════════════════════════════════════════════════════════
+try:
+    sheet     = get_sheet()
+    pwd_sheet = get_pwd_sheet()
+    connected = True
+except Exception as e:
+    st.error(f"❌ Google Sheets connection failed: {e}")
     st.stop()
 
-# ─── Google Sheets ─────────────────────────────────────────────────────────────
-@st.cache_resource
-def get_client():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
-    return gspread.authorize(creds)
+# Gate 1 — not logged in
+if not st.session_state.authenticated:
+    show_login(pwd_sheet)
+    st.stop()
 
-def get_sheet():
-    client = get_client()
-    try:
-        sheet = client.open(SHEET_NAME).sheet1
-    except gspread.SpreadsheetNotFound:
-        spreadsheet = client.create(SHEET_NAME)
-        sheet = spreadsheet.sheet1
-        sheet.append_row(HEADERS)
-        return sheet
-    if sheet.row_values(1) != HEADERS:
-        sheet.insert_row(HEADERS, 1)
-    return sheet
+# Gate 2 — must change default password before proceeding
+if st.session_state.must_change_pwd:
+    show_change_password(pwd_sheet, forced=True)
+    st.stop()
 
+# ─── Load expenses ─────────────────────────────────────────────────────────────
 def load_expenses(sheet):
-    expenses = []
+    rows = []
     for r in sheet.get_all_records():
         try:
-            expenses.append({
+            rows.append({
                 "timestamp":    r["timestamp"],
                 "paid_by":      r["paid_by"],
                 "description":  r["description"],
@@ -283,7 +366,7 @@ def load_expenses(sheet):
             })
         except Exception:
             continue
-    return expenses
+    return rows
 
 def save_expense(sheet, exp):
     sheet.append_row([
@@ -300,35 +383,28 @@ def update_expense_in_sheet(sheet, row_index, exp):
 def delete_expense_from_sheet(sheet, row_index):
     sheet.delete_rows(row_index)
 
-# ─── Connect & Load ────────────────────────────────────────────────────────────
-try:
-    sheet     = get_sheet()
-    expenses  = load_expenses(sheet)
-    connected = True
-except Exception as e:
-    st.error(f"❌ Google Sheets connection failed: {e}")
-    expenses  = []
-    connected = False
-
-# ─── Hero (shown after login) ──────────────────────────────────────────────────
+expenses     = load_expenses(sheet)
 current_user = st.session_state.current_user
 
-hero_col, logout_col = st.columns([5, 1])
+# ─── Hero ──────────────────────────────────────────────────────────────────────
+hero_col, action_col = st.columns([5, 1])
 with hero_col:
     st.markdown(
         f'<div class="hero">'
         f'<h1>Trip Expense Tracker</h1>'
         f'<h2>🐯🌴 PENCH WILDLIFE TRIP</h2>'
-        f'<div class="hero-user">👤 Logged in as {current_user}</div>'
+        f'<div class="hero-user">👤 {current_user}</div>'
         f'</div>',
         unsafe_allow_html=True
     )
-with logout_col:
-    st.markdown("<div style='height:2.8rem'></div>", unsafe_allow_html=True)
-    if st.button("🚪 Logout", help="Sign out"):
-        for key in ["authenticated", "current_user", "editing_idx",
-                    "pending_delete", "pending_settle", "settled_payments",
-                    "show_all", "form_reset_key"]:
+with action_col:
+    st.markdown("<div style='height:2rem'></div>", unsafe_allow_html=True)
+    if st.button("🔑 Pwd", help="Change your password"):
+        st.session_state.must_change_pwd = True
+        st.rerun()
+    if st.button("🚪 Out", help="Logout"):
+        for key in ["authenticated", "current_user", "must_change_pwd", "editing_idx",
+                    "pending_delete", "pending_settle", "settled_payments", "show_all", "form_reset_key"]:
             st.session_state.pop(key, None)
         st.rerun()
 
@@ -348,7 +424,6 @@ with col_left:
         unsafe_allow_html=True
     )
 
-    # When adding, default paid_by to current user
     default_paid_by_idx = FRIENDS.index(current_user) if current_user in FRIENDS else 0
 
     paid_by = st.selectbox(
@@ -390,7 +465,6 @@ with col_left:
             key=f"split_with_{fk}"
         )
 
-    # ── Buttons ────────────────────────────────────────────────────────────────
     if is_editing:
         b1, b2 = st.columns(2)
         with b1:
@@ -413,8 +487,7 @@ with col_left:
                         "all_involved": all_involved,
                         "per_head":     per_head,
                     }
-                    row_index = st.session_state.editing_idx + 2
-                    update_expense_in_sheet(sheet, row_index, updated)
+                    update_expense_in_sheet(sheet, st.session_state.editing_idx + 2, updated)
                     st.session_state.editing_idx = None
                     st.success("✅ Expense updated!")
                     st.rerun()
@@ -446,7 +519,7 @@ with col_left:
                     "per_head":     per_head,
                 })
                 st.success(f"✅ Saved ₹{amount:,.2f} for '{description.strip()}'")
-                st.session_state.show_all    = False
+                st.session_state.show_all     = False
                 st.session_state.form_reset_key += 1
                 st.rerun()
 
@@ -473,7 +546,7 @@ with col_left:
                         if e["paid_by"] == filter_person or filter_person in e["all_involved"]]
 
         total_filtered = len(filtered)
-        showing = list(reversed(filtered if st.session_state.show_all else filtered[-5:]))
+        showing        = list(reversed(filtered if st.session_state.show_all else filtered[-5:]))
 
         label_suffix = f" · {filter_person}" if filter_person != "All" else ""
         badge_text   = f"All {total_filtered}" if st.session_state.show_all else f"Last 5 of {total_filtered}"
@@ -485,12 +558,10 @@ with col_left:
         if not filtered:
             st.markdown(f'<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.7rem;color:#a9a9c8;text-align:center;font-size:0.85rem;">No expenses for {filter_person}.</div>', unsafe_allow_html=True)
         else:
-            # Handle edit via query params
             qp = st.query_params
             if "edit" in qp:
                 try:
                     idx = int(qp["edit"])
-                    # ── OWNER CHECK: only the payer can edit ──
                     if expenses[idx]["paid_by"] == current_user:
                         st.session_state.editing_idx = idx
                     else:
@@ -502,8 +573,7 @@ with col_left:
 
             for orig_idx, exp in showing:
                 is_confirm_delete = st.session_state.pending_delete == orig_idx
-                # ── Owner check ──────────────────────────────────────────────
-                is_owner = (current_user == exp["paid_by"])
+                is_owner          = (current_user == exp["paid_by"])
 
                 if is_confirm_delete:
                     st.markdown(f"""
@@ -527,10 +597,7 @@ with col_left:
                         if st.button("✖ Cancel", key=f"cancel_del_{orig_idx}"):
                             st.session_state.pending_delete = None
                             st.rerun()
-
                 else:
-                    # ── Normal expense card ──────────────────────────────────
-                    # Edit icon: clickable for owner, dimmed for others
                     if is_owner:
                         edit_btn_html = (
                             f'<a href="?edit={orig_idx}" target="_self" '
@@ -540,7 +607,7 @@ with col_left:
                             f'title="Edit your expense">✏️</a>'
                         )
                     else:
-                        payer = exp["paid_by"]
+                        payer         = exp["paid_by"]
                         edit_btn_html = (
                             f'<span style="font-size:0.85rem;opacity:0.18;cursor:not-allowed;" '
                             f'title="Only {payer} can edit this">✏️</span>'
@@ -562,7 +629,6 @@ with col_left:
                         </div>
                     </div>""", unsafe_allow_html=True)
 
-                    # Delete button — only rendered for owner
                     if is_owner:
                         _, del_col = st.columns([5, 1])
                         with del_col:
@@ -633,16 +699,13 @@ with col_right:
             st.markdown('<div class="settled">🎉 Everyone is settled up!</div>', unsafe_allow_html=True)
         else:
             for debtor, creditor, amt in transactions:
-                pair_key        = f"{debtor}|{creditor}"
-                is_settled      = pair_key in st.session_state.settled_payments
-                is_picking_upi  = st.session_state.pending_settle == pair_key
+                pair_key       = f"{debtor}|{creditor}"
+                is_settled     = pair_key in st.session_state.settled_payments
+                is_picking_upi = st.session_state.pending_settle == pair_key
 
-                amt_str    = f"{amt:.2f}"
-                upi_note   = f"Trip+settlement"
-                payee_upi  = UPI_IDS.get(creditor, "")
-                payee_name = creditor
-
-                upi_base    = f"upi://pay?pa={payee_upi}&pn={payee_name}&am={amt_str}&cu=INR&tn={upi_note}"
+                amt_str   = f"{amt:.2f}"
+                payee_upi = UPI_IDS.get(creditor, "")
+                upi_base  = f"upi://pay?pa={payee_upi}&pn={creditor}&am={amt_str}&cu=INR&tn=Trip+settlement"
 
                 if is_settled:
                     row_html = f"""
@@ -669,9 +732,8 @@ with col_right:
                         </div>
                         <a href="{upi_base}"
                            style="text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;
-                                  background:linear-gradient(90deg,#1a6e3c,#1a9e52);
-                                  border-radius:8px;padding:0.35rem 0.85rem;
-                                  font-size:0.78rem;font-weight:700;color:#fff;
+                                  background:linear-gradient(90deg,#1a6e3c,#1a9e52);border-radius:8px;
+                                  padding:0.35rem 0.85rem;font-size:0.78rem;font-weight:700;color:#fff;
                                   font-family:'Syne',sans-serif;white-space:nowrap;
                                   box-shadow:0 2px 10px rgba(26,158,82,0.4);letter-spacing:0.3px;">
                             Open UPI App
