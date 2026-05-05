@@ -43,7 +43,7 @@ html, body {{
     min-width: 320px;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.50;
+    opacity: 0.65;
     mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0) 100%),
                 linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,1) 100%);
     -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 55%, rgba(0,0,0,0) 100%),
