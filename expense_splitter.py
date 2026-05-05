@@ -5,7 +5,6 @@ from google.oauth2.service_account import Credentials
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from streamlit_cookies_controller import CookieController
-from streamlit_cookies_controller import CookieController
 
 # ─── Page Config ───────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Trip Expense Tracker 🧳", page_icon="🐯", layout="wide")
