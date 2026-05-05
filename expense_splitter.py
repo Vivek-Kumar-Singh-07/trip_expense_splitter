@@ -36,8 +36,8 @@ html, body {{
 /* Friends group photo overlay — fixed, behind everything, 50% opacity */
 .friends-bg {{
     position: fixed;
-    top: 50%;
-    left: 50%;
+    bottom: 0;
+    right: 0;
     width: 55vw;
     max-width: 820px;
     min-width: 320px;
