@@ -171,6 +171,15 @@ SHEET_NAME = "TripExpenseSplitter"
 HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 IST        = timezone(timedelta(hours=5, minutes=30))
 
+UPI_IDS = {
+    "Sanjeet": "",
+    "Kundan":  "",
+    "Nayan":   "",
+    "Sanjay":  "",
+    "Govind":  "",
+    "Vivek":   "",
+}
+
 # ─── Helpers ───────────────────────────────────────────────────────────────────
 def hash_pwd(pwd: str) -> str:
     return hashlib.sha256(pwd.strip().encode()).hexdigest()
