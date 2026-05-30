@@ -166,19 +166,10 @@ div[data-testid="column"] button[data-testid*="undo"] {{
 """, unsafe_allow_html=True)
 
 # ─── Config ────────────────────────────────────────────────────────────────────
-FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek"]
+FRIENDS    = ["Sanjeet", "Kundan", "Nayan", "Sanjay", "Govind", "Vivek","Abhijeet","Kashif"]
 SHEET_NAME = "TripExpenseSplitter"
 HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "all_involved", "per_head"]
 IST        = timezone(timedelta(hours=5, minutes=30))
-
-UPI_IDS = {
-    "Sanjeet": "sanjeet@upi",
-    "Kundan":  "kundan@upi",
-    "Nayan":   "nayan@upi",
-    "Sanjay":  "sanjay@upi",
-    "Govind":  "govind@upi",
-    "Vivek":   "vivek@upi",
-}
 
 # ─── Helpers ───────────────────────────────────────────────────────────────────
 def hash_pwd(pwd: str) -> str:
