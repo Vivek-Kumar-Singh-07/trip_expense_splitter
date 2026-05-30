@@ -172,12 +172,14 @@ HEADERS    = ["timestamp", "paid_by", "description", "amount", "split_with", "al
 IST        = timezone(timedelta(hours=5, minutes=30))
 
 UPI_IDS = {
-    "Sanjeet": "",
-    "Kundan":  "",
+    "Sanjeet": "oksanjeet@ybl",
+    "Kundan":  "kuundan07@okaxis",
     "Nayan":   "",
-    "Sanjay":  "",
+    "Sanjay":  "skkumarsanjay419-1@oksbi",
     "Govind":  "",
-    "Vivek":   "",
+    "Vivek":   "hellohiccup@ybl",
+    "Abhijeet": "7701920181@ybl",
+    "Kashif": "mallickkakvi@okicici"
 }
 
 # ─── Helpers ───────────────────────────────────────────────────────────────────
