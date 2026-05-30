@@ -174,7 +174,7 @@ IST        = timezone(timedelta(hours=5, minutes=30))
 UPI_IDS = {
     "Sanjeet": "oksanjeet@ybl",
     "Kundan":  "kuundan07@okaxis",
-    "Nayan":   "",
+    "Nayan":   "8877722788@axisbank",
     "Sanjay":  "skkumarsanjay419-1@oksbi",
     "Govind":  "",
     "Vivek":   "hellohiccup@ybl",
